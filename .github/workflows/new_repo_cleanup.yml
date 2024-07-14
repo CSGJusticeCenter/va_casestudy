@@ -1,0 +1,83 @@
+# ******** DO NOT USE!! ******** #
+# The step to check for develop branch isn't working right, so if someone creates a new repo from this template but didn't check the box to include all branches, the action will crash. When it does work, it only deletes the merge-main-develop workflow. 
+# The merge-main-develop workflow only happens in _project_template repo, so this one isn't technically necessary 
+
+# -----------------------
+# clean up workflows in repositories copied from this template - delete actions that only apply to the template
+
+name: Delete template actions from new repo
+on:
+  # run when branch created (repo generated from template)
+  create:
+
+# only keep latest run of this workflow
+#concurrency:
+#  group: template-repo-cleanup
+#  cancel-in-progress: true
+
+# give git permission to write
+permissions: 
+  actions: write
+  checks: write
+  contents: write
+
+jobs:
+  template-repo-cleanup:
+    runs-on: ubuntu-latest
+    # only run once, when the repo is created, if repo is not _project_template 
+    if: |
+      github.event.repository.name != '_project_template' &&  
+      github.run_number == 1
+
+    steps:
+      # get main branch repo contents
+      - name: Checkout main
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # include all branches and commit history
+          ref: main
+
+      # remove files not needed for repo created from template
+      - name: Remove unneeded template files
+        run: |
+          rm -rf \
+            .github/workflows/merge-main-develop.yml \
+            .github/workflows/template-cleanup.yml 
+
+      # Commit modified files & push to main
+      - name: Commit changes to main
+        run: |
+          git config --global user.email "test@test.com"
+          git config --global user.name "GitHub Actions"
+          git add .
+          git commit -m "Clean up files from template repo"
+          git push origin main
+
+  update-develop:
+    # run AFTER template-repo-cleanup
+    needs: template-repo-cleanup
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check for develop
+        # "--exit-code" returns 0 if develop branch is present, 2 if not
+        run: |
+          echo "dev_exists=$(git ls-remote --exit-code --heads origin develop)" >> $GITHUB_ENV
+          echo ${{ env.DEVEXISTS }}
+      
+      # checkout develop branch
+      - name: Checkout develop
+        if: env.dev_exists == 0
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # include all branches and commit history
+          ref: develop
+          
+      # merge main with develop & push
+      - name: Update develop with changes from main 
+        if: env.dev_exists == 0
+        run: |
+          git config --global user.email "test@test.com"
+          git config --global user.name "GitHub Actions"
+          git merge remotes/origin/main --allow-unrelated-histories
+          git push origin develop
