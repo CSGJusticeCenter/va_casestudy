@@ -1,0 +1,69 @@
+# ---------------------------
+# adjust this list to fit your project needs
+# if making a netlify site, do NOT ignore *.html or image files
+# extensions are all lowercase as Windows is not case-sensitive
+# ---------------------------
+
+# r utility files
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+# rmarkdown temp files
+*.knit.md
+*.utf8.md
+
+# possible data files
+*.accdb
+*.csv
+*.db
+*.dta
+*.gz
+*.httr-oauth
+*.lst
+*.mdb
+*.nvp
+*.rda
+*.rds
+*.sas7bdat
+*.sav
+*.twb
+*.twbr
+*.xlsx
+*.xls
+*.xml
+*.zip
+
+# possible output files
+*.docx
+*.doc
+*.html
+*.htm
+*.log
+*.pdf
+*.pptx
+*.ppt
+*.rtf
+*.thmx
+*.txt
+
+# image files
+*.ai
+*.emf
+*.jpeg
+*.jpg
+*.png
+*.svg
+*.tiff
+*.tif
+
+# media files
+*.dcf
+*.m4a
+*.mp3
+*.mp4
+*.wma
+
+# stata 18 temp files
+*.stswp

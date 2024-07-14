@@ -1,0 +1,26 @@
+name: Merge main into develop to keep in sync
+
+on:
+  push:
+    branches: [ "main" ]
+
+  workflow_dispatch:
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    # only run this action for the template repo
+    if: github.event.repository.name == '_project_template'
+    steps:
+      - name: Checkout develop branch
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # include all branches and commit history
+          ref: develop
+
+      - name: Merge main with develop and push develop to GitHub
+        run: |
+          git config --global user.email "test@test.com"
+          git config --global user.name "GitHub Actions"
+          git merge remotes/origin/main
+          git push origin develop
