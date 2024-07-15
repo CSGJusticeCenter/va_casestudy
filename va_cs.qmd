@@ -19,28 +19,30 @@ format:
 
 #activate!!
 library(charlatan)
+library(lubridate)
 library(dplyr)
 library(knitr)
 library(ggplot2)
 
+
 #programs
 #https://www.bop.gov/inmates/fsa/docs/fsa_program_guide_2107.pdf
 #https://www.bop.gov/inmates/fsa/docs/evidence_based_recidivism_reduction_programs.pdf
-prgnm = c("am",
-          "brave",
-          "bcs",
-          "resolve",
-          "rdap",
-          "dbt",
-          "sotrt",
-          "challenge",
-          "mhsd",
-          "stages",
+prgnm = c("am,0","am,0","am,1",
+          "brave,0","brave,0","brave,1",
+          "bcs,0","bcs,0","bcs,1",
+          "resolve,0","resolve,0","resolve,1",
+          "rdap,0","rdap,0","rdap,1",
+          "dbt,0","dbt,0","dbt,1",
+          "sotrt,0","sotrt,0","sotrt,1",
+          "challenge,0","challenge,1",
+          "mhsd,0","mhsd,1",
+          "stages,0","stages,1",
           #spelling errors
-          "bgs",
-          "fbt",
-          "brv",
-          "rdp")
+          "bgs,0",
+          "fbt,0",
+          "brv,0",
+          "rdp,0")
 prgnm2 = c("am",
           "brave",
           "bcs",
@@ -57,8 +59,9 @@ prgnm2 = c("am",
           "resol")
 
 #dataframe sizes: sizen - roster, sizen2 - program staff
-sizen  = 40
+sizen  = 50
 sizen2 = 80
+date   = 2021
 
 ##set up roster/recidivism dataframe
 #create 40 person dataframe
@@ -66,9 +69,40 @@ set.seed(80)
 roster <- data.frame(
   client_names = ch_name(sizen),
   age          = round(rnorm(sizen,29,5)),
-  programs     = sample(prgnm, size=sizen, replace = TRUE),
-  returns      = rbinom(n=sizen, size=1, prob=0.75)
-  )
+  programs.temp= sample(prgnm, size=sizen, replace = TRUE),
+  datestart    = sample(seq(as.Date(paste0(date,'/01/01')), as.Date(paste0(date,'/12/31')), by="day"), sizen)
+  ) |>
+  mutate(programs = substr(programs.temp,1,nchar(programs.temp)-2),
+         returns  = substr(programs.temp,nchar(programs.temp),nchar(programs.temp))) |>
+  select(-c(programs.temp))
+
+##set up roster/recidivism dataframe for updated roster
+#create 100 person dataframe
+sizen3 = 100
+date2  = 2022
+
+set.seed(20012)
+roster.update <- data.frame(
+  client_names   = ch_name(sizen3),
+  age            = round(rnorm(sizen3,29,5)),
+  programs.temp= sample(prgnm, size=sizen3, replace = TRUE),
+  datestart    = sample(seq(as.Date(paste0(date2,'/01/01')), as.Date(paste0(date2,'/12/31')), by="day"), sizen3)
+  ) |>
+  mutate(programs_clean = substr(programs.temp,1,nchar(programs.temp)-2),
+         returns        = substr(programs.temp,nchar(programs.temp),nchar(programs.temp))) |>
+  select(-c(programs.temp))
+#create dataset of numerators and denominators
+roster2.update <- roster.update |>
+  select(-c(client_names,age)) |>
+  group_by(programs_clean) |>
+  count(returns) |>
+  mutate(clients_served = sum(n),
+         recid_rate     = case_when(returns == 1 ~ round(n/clients_served,2),
+                                returns == 0 ~ 0),
+         year           = factor(2022)
+         ) |>
+  slice(n()) |>
+  select(-c(returns, n))
 
 ##set up program staff dataframe
 #create 80 person dataframe
@@ -82,7 +116,7 @@ staff <- data.frame(
 
 ##Data Exploration
 
-Let's take a look at our roster! Our DOC captures 10 Evidence Based Recidivism Reduction (EBRR) programs listed by the Federal Bureau of Prisons and the individuals involved.The name of our data is `roster`.
+Let's take a look at our roster! Our DOC captures 10 Evidence Based Recidivism Reduction (EBRR) programs in 2021 listed by the Federal Bureau of Prisons and the individuals involved.The name of our data is `roster`.
 
 ```{r exploreroster}
 #what's in our data
@@ -130,8 +164,9 @@ roster2 <- roster.clean |>
   group_by(programs_clean) |>
   count(returns) |>
   mutate(clients_served = sum(n),
-         recid_rate = case_when(returns == 1 ~ round(n/clients_served,2),
-                                returns == 0 ~ 0)
+         recid_rate     = case_when(returns == 1 ~ round(n/clients_served,2),
+                                returns == 0 ~ 0),
+         year           = factor(2021)
          ) |>
   slice(n()) |>
   select(-c(returns, n))
@@ -197,11 +232,11 @@ But what if we want a nice data visualization of it all?
 #build bar chart of recidivism rates across programs
 rr <- ggplot(tabout,aes(x=programs_clean,y=recid_rate)) +
   geom_bar(stat="identity", fill = "darkblue") +
-  geom_text(aes(label=num_staff), vjust = 1.6, color = "white") +
+  geom_text(aes(label=paste(num_staff,"staff")), vjust=-0.3, color = "black") +
   ylim(0,1) +
   ylab("Recidivism Rate") +
   xlab("EBBR Programs") +
-  ggtitle("Recidivism Rate across EBBR programs\nNumber of Program Staff listed in bars") +
+  ggtitle("Recidivism Rate across 2021 EBBR programs\nNumber of Program Staff listed in bars") +
   theme_classic()
 
 rr
@@ -211,7 +246,7 @@ rr
 ```{r badreport, echo=FALSE}
 
 adv <- tabout |>
-  filter(!(programs_clean %in% c("challenge", "brave", "stages")))
+  filter(!(programs_clean %in% c("bcs", "brave", "sotrt", "mhsd", "resolve")))
 
 adv_rate <- round(mean(adv$recid_rate)*100,1)
 
@@ -250,17 +285,65 @@ print(w)
 last <- tail(tabout$programs_clean,n=1)
 
 #add recidivism weight averages to plot
-rr + geom_hline(yintercept=w, linetype = "dashed", color = "gray", size = 1) +
+rr + geom_hline(yintercept=w, linetype = "dashed", color = "red", size = 1) +
   geom_label(aes(label=paste("Weighted avg\n",w)),
              data=tabout %>% filter(programs_clean==last),
              nudge_y = w-tabout$recid_rate[10]-.1,
-             nudge_x = -1
-  ) + geom_hline(yintercept=unw, linetype = "dashed", color = "black", size = 1) +
+             nudge_x = -4
+  ) + geom_hline(yintercept=unw, linetype = "dashed", color = "grey", size = 1) +
   geom_label(aes(label=paste("Unweighted avg\n",unw)),
              data=tabout %>% filter(programs_clean==last),
              nudge_y = unw-tabout$recid_rate[10]+.1,
-             nudge_x = -7
+             nudge_x = -8
   ) 
 
+
+```
+
+
+Uh oh! Looks like a new roster was just dropped with 2022 data. Quick! Redo the analysis to include 2022 data!
+
+```{r rosterupdate}
+
+tabout3 <- inner_join(roster2.update, staff2, by = ("programs_clean"))
+
+tabout3 |> kable(format = "html")
+
+#total clients served
+total <- sum(tabout3$clients_served)
+
+tabout3.wgt <- tabout3 |>
+  mutate(recid_rate_w = clients_served*recid_rate)
+
+w2 <- sum(tabout3.wgt$recid_rate_w)/total
+print(w2)
+
+tabout.final <- rbind(tabout,tabout3)
+
+#build bar chart of recidivism rates across programs
+rr <- ggplot(tabout.final,aes(x=programs_clean,y=recid_rate,
+                              fill=year)) +
+  geom_bar(position = "dodge", 
+           stat = "identity") +
+  #geom_text(aes(label=paste(num_staff,"staff")), vjust=-0.3, color = "black") +
+  scale_fill_manual(values=c("darkblue","lightblue")) +
+  ylim(0,1) +
+  ylab("Recidivism Rate") +
+  xlab("EBBR Programs") +
+  ggtitle("Recidivism Rates across EBBR programs\n2021 - 2022") +
+  theme_classic()
+
+rr + 
+  geom_hline(yintercept=w, linetype = "dashed", color = "red", size = 1) +
+  geom_hline(yintercept=w2, linetype = "dashed", color = "grey", size = 1) +
+    annotate(geom = "label",
+             label = c(paste("2021 Weighted avg\n",round(w,2)), 
+                       paste("2022 Weighted avg\n",round(w2,2))
+                       ),
+             x = c("bcs", "rdap"),
+             y = c(w, w2),
+             angle = 0
+             )
+  
 
 ```
