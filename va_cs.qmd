@@ -1,0 +1,266 @@
+---
+title: "ADC: VA Case Study"
+format: 
+  html:
+    embed-resources: true
+    code-fold: show
+    code-overflow: wrap
+---
+
+## Create simulated data
+
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
+
+#packages
+#install.packages("charlatan")
+#install.packages("dplyr")
+#install.packages("knitr")
+#install.packages("ggplot2")
+
+#activate!!
+library(charlatan)
+library(dplyr)
+library(knitr)
+library(ggplot2)
+
+#programs
+#https://www.bop.gov/inmates/fsa/docs/fsa_program_guide_2107.pdf
+#https://www.bop.gov/inmates/fsa/docs/evidence_based_recidivism_reduction_programs.pdf
+prgnm = c("am",
+          "brave",
+          "bcs",
+          "resolve",
+          "rdap",
+          "dbt",
+          "sotrt",
+          "challenge",
+          "mhsd",
+          "stages",
+          #spelling errors
+          "bgs",
+          "fbt",
+          "brv",
+          "rdp")
+prgnm2 = c("am",
+          "brave",
+          "bcs",
+          "resolve",
+          "rdap",
+          "dbt",
+          "sotrt",
+          "challenge",
+          "mhsd",
+          "stages",
+          #spelling errors
+          "brv",
+          "stg",
+          "resol")
+
+#dataframe sizes: sizen - roster, sizen2 - program staff
+sizen  = 40
+sizen2 = 80
+
+##set up roster/recidivism dataframe
+#create 40 person dataframe
+set.seed(80)
+roster <- data.frame(
+  client_names = ch_name(sizen),
+  age          = round(rnorm(sizen,29,5)),
+  programs     = sample(prgnm, size=sizen, replace = TRUE),
+  returns      = rbinom(n=sizen, size=1, prob=0.75)
+  )
+
+##set up program staff dataframe
+#create 80 person dataframe
+set.seed(160)
+staff <- data.frame(
+  staff = ch_name(sizen2),
+  prg     = sample(prgnm2, size=sizen2, replace = TRUE)
+  )
+
+```
+
+##Data Exploration
+
+Let's take a look at our roster! Our DOC captures 10 Evidence Based Recidivism Reduction (EBRR) programs listed by the Federal Bureau of Prisons and the individuals involved.The name of our data is `roster`.
+
+```{r exploreroster}
+#what's in our data
+names(roster)
+
+#count total number of programs
+n_distinct(roster$programs)
+
+#make sure people only show up in a program once
+n_distinct(roster$client_names)
+
+#list out the actual program names
+roster |>
+  count(programs)
+```
+
+It looks like there are some errors in your data! Clean them up so you can accurately report all EBRR programs and their associated recidivism rates
+
+```{r cleanroster}
+#clean program names
+roster.clean <- roster |>
+  mutate(programs_clean = case_when(programs == "bgs" ~ "bcs",
+                                   programs == "fbt" ~ "dbt",
+                                   programs == "brv" ~ "brave",
+                                   programs == "rdp" ~ "rdap",
+                                   TRUE ~ programs)) |>
+  select(-c(programs))
+
+#check cleaned program names
+roster.clean |>
+  count(programs_clean)
+
+#recidivism by program count
+roster.clean |>
+  count(programs_clean,returns)
+
+```
+
+Let's calculate recidivism rates!
+
+```{r rates}
+#create dataset of numerators and denominators
+roster2 <- roster.clean |>
+  select(-c(client_names,age)) |>
+  group_by(programs_clean) |>
+  count(returns) |>
+  mutate(clients_served = sum(n),
+         recid_rate = case_when(returns == 1 ~ round(n/clients_served,2),
+                                returns == 0 ~ 0)
+         ) |>
+  slice(n()) |>
+  select(-c(returns, n))
+
+```
+
+Let's take a look at our program staffing! Our DOC captures 10 Evidence Based Recidivism Reduction (EBRR) programs listed by the Federal Bureau of Prisons and the individuals involved.The name of our data is `staff`.
+
+```{r explorestaff}
+#what's in our data
+names(staff)
+
+#count total number of programs
+n_distinct(staff$prg)
+
+#list out the actual program names
+staff |>
+  count(prg)
+
+```
+
+It looks like there are some errors in your data! Clean them up so you can accurately report all EBRR programs and their associated program staff.
+
+```{r cleanstaff}
+#clean program names
+staff.clean <- staff |>
+  mutate(programs_clean = case_when(prg == "resol" ~ "resolve",
+                                   prg == "brv" ~ "brave",
+                                   prg == "stg" ~ "stages",
+                                   TRUE ~ prg)) |>
+  select(-c(prg))
+
+#check cleaned program names
+staff.clean |>
+  count(programs_clean)
+
+```
+
+Let's see how many program staff we have by program!
+
+```{r numstaff}
+#create dataset of staff counts
+staff2 <- staff.clean |>
+  select(-c(staff)) |>
+  count(programs_clean) |>
+  rename(num_staff = n)
+
+```
+
+Let's combine the program staff and recidivism rates dataframes so we can print out a table!
+
+```{r merge}
+tabout <- inner_join(roster2, staff2, by = ("programs_clean")) |>
+  select(-c(clients_served)) 
+
+tabout |> kable(format = "html")
+
+```
+
+But what if we want a nice data visualization of it all?
+
+```{r dataviz1}
+#build bar chart of recidivism rates across programs
+rr <- ggplot(tabout,aes(x=programs_clean,y=recid_rate)) +
+  geom_bar(stat="identity", fill = "darkblue") +
+  geom_text(aes(label=num_staff), vjust = 1.6, color = "white") +
+  ylim(0,1) +
+  ylab("Recidivism Rate") +
+  xlab("EBBR Programs") +
+  ggtitle("Recidivism Rate across EBBR programs\nNumber of Program Staff listed in bars") +
+  theme_classic()
+
+rr
+
+```
+
+```{r badreport, echo=FALSE}
+
+adv <- tabout |>
+  filter(!(programs_clean %in% c("challenge", "brave", "stages")))
+
+adv_rate <- round(mean(adv$recid_rate)*100,1)
+
+```
+
+Oh no!! An advocacy group just publicly published that EBBR programs' recidivism rates are at an all time high of `r adv_rate`% with a report that claims to have used **your** DOC's reported data on EBBR program recidivism rates! Find out what's going on, and fast!
+
+```{r goodreport}
+
+tabout2 <- inner_join(roster2, staff2, by = ("programs_clean"))
+
+#calculate average recidivism rate across programs
+unw <- mean(tabout2$recid_rate)
+print(unw)
+
+```
+
+
+Well this number is much better, but it's still way too high and we're going to lose our staffing! Keep investigating!
+
+```{r weights}
+#total clients served
+total <- sum(tabout2$clients_served)
+
+tabout2.wgt <- tabout2 |>
+  mutate(recid_rate_w = clients_served*recid_rate)
+
+w <- sum(tabout2.wgt$recid_rate_w)/total
+print(w)
+
+```
+
+
+```{r dataviz2, warning=FALSE}
+#for positioning
+last <- tail(tabout$programs_clean,n=1)
+
+#add recidivism weight averages to plot
+rr + geom_hline(yintercept=w, linetype = "dashed", color = "gray", size = 1) +
+  geom_label(aes(label=paste("Weighted avg\n",w)),
+             data=tabout %>% filter(programs_clean==last),
+             nudge_y = w-tabout$recid_rate[10]-.1,
+             nudge_x = -1
+  ) + geom_hline(yintercept=unw, linetype = "dashed", color = "black", size = 1) +
+  geom_label(aes(label=paste("Unweighted avg\n",unw)),
+             data=tabout %>% filter(programs_clean==last),
+             nudge_y = unw-tabout$recid_rate[10]+.1,
+             nudge_x = -7
+  ) 
+
+
+```
