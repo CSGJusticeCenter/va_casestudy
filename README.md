@@ -1,17 +1,16 @@
-__This template contains the key elements that should be included in a project README. Elements enclosed in "\<\>" brackets should be updated with info from your project. Some sections may not apply to your project, and some projects may have additional sections/information. Edit this template to fit your needs!__
-
-# \<Project Name\>
-\<Very brief description of repository contents\>  
+# \<Virtual Academy\>
+This GitHub repository contains materials for the Advancing Data in Corrections (ADC) Virtual Academy conference (08/16/2024 - 08/17/2024). Specifically, code and guidance for the Case Study.
 
 ## Project overview  
 \<Description of project - purpose, goals, background, etc.\>  
 \<Links to research or analysis plan\>  
 
 ## Assigned Research Staff
-\<Names and roles\>  
+Joshua Mallett - Deputy Division Director, Research
+Ruth Coffman - Deputy Program Directory, State 
 
 ## SharePoint folder  
-[JC Research/Documents/\<folder name\>](<link-to-folder>)  
+[Virtual Academy - Case Study](https://csgorg.sharepoint.com/sites/Team-JC-Research/Shared%20Documents/Forms/AllItems.aspx?OR=Teams%2DHL&CT=1629743326505&id=%2Fsites%2FTeam%2DJC%2DResearch%2FShared%20Documents%2FVA%2Fbackground%2FVA%20Summer%20Conference%2Fcase%5Fstudy&viewid=134e5f2c%2Df80c%2D46ef%2D8491%2D1eac7193eb98)  
 
 ```
 |-- <main project folder> 
