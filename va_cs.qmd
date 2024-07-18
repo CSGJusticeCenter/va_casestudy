@@ -151,10 +151,10 @@ staff <- data.frame(
 ```{r toggle, echo=FALSE}
 #ANALYSIS TOGGLE
 ######################################
-roster  <- roster.update
-date1   <- date3
-date2   <- date4
-ALL.BY  <- F #change to F if you want to plot recidivism rate over two years TOTAL (T if you want to stratify by year)
+roster  <- roster #options: roster; roster.update
+date1   <- date1         #options: date1 (within roster); date3 (within roster.update)
+date2   <- date2         #options: date2 (within roster); date4 (within roster.update)
+ALL.BY  <- T             #change to F if you want to plot recidivism rate over two years TOTAL (T if you want to stratify by year)
 ######################################
 ```
 ```{r remove, echo=FALSE}
@@ -263,16 +263,12 @@ Let's calculate recidivism rates for all of our programs! It looks like we have 
 ##create dataset of numerators and denominators
 #recidivism rates overall
 roster2.1 <- roster.clean |>
-  mutate(year           = case_when(year(datestart) == date1 ~ factor(date1),
-                                    year(datestart) == date2 ~ factor(date2)
-                                    )
-         ) |>
+  mutate(year = factor(year(datestart))) |>
   select(-c(client_names,age,programs)) |>
   group_by(programs_clean) |>
   count(returns) |>
   mutate(clients_served = sum(n),
          recid_rate_all = case_when(returns == 1 ~ round(n/clients_served,2),
-                                    returns == 1 ~ round(n/clients_served,2),
                                 returns == 0 ~ 0)
          ) |>
   group_by(programs_clean) |>
@@ -286,16 +282,12 @@ roster2.1 |>
 
 #recidivism rates by year
 roster2.2 <- roster.clean |>
-  mutate(year           = case_when(year(datestart) == date1 ~ factor(date1),
-                                    year(datestart) == date2 ~ factor(date2)
-                                    )
-         ) |>
+  mutate(year = factor(year(datestart))) |>
   select(-c(client_names,age,programs)) |>
   group_by(programs_clean,year) |>
   count(returns,year) |>
   mutate(clients_served = sum(n),
-         recid_rate_year= case_when(returns == 1 & year == date1 ~ round(n/clients_served,2),
-                                    returns == 1 & year == date2 ~ round(n/clients_served,2),
+         recid_rate_year= case_when(returns == 1 ~ round(n/clients_served,2),
                                 returns == 0 ~ 0)
          ) |>
   group_by(programs_clean,year) |>
@@ -310,6 +302,8 @@ roster2.2 |>
 
 #combine data by programs to capture recidivism rates overall and by year
 roster2 <- inner_join(roster2.1, roster2.2, by = "programs_clean")
+#verify that join did not lose any observations
+anti_join(roster2.1, roster2.2, by = "programs_clean")
 
 ```
 
@@ -402,6 +396,8 @@ tabout <- inner_join(roster2, staff2, by = ("programs_clean")) |>
   #correct missing values for recid_rate_all since this is the overall recidivism rate across multiple years
   group_by(programs_clean) |>
   fill(recid_rate_all, .direction = "updown")
+#verify join was successful
+anti_join(roster2, staff2, by = ("programs_clean"))
 
 #overall recidivism rates
 tabout |> 
@@ -436,10 +432,10 @@ Nicer!!!
 ```{r dataviz1, warning=FALSE}
 #build bar chart of recidivism rates across programs
 #information to plot, pick dates
-dates <- c(date1,date2) #what years of data do you want to plot?
+dates <- as.numeric(as.vector(unique(tabout$year))) #what years of data do you want to plot?
 
 #custom title header of plot
-titledates <- ifelse(length(dates)==2 | !ALL.BY, paste0(date1," - ",date2),
+titledates <- ifelse(length(dates)>=2 | !ALL.BY, paste0(date1," - ",date2),
                      ifelse((dates==date1 | dates==date2) & ALL.BY, as.character(dates), ""))
 
 #which years/programs are missing data?
@@ -447,7 +443,7 @@ prg.NA <- tabout |>
   filter(is.na(recid_rate_year)) |>
   pull(programs_clean)
 
-#plot it! this will plot recidivism rates with overlayed staffing text
+#plot it! this will plot recidivism rates with overlaid staffing text
 rr <- ggplot(tabout |> 
                filter(if(ALL.BY) year %in% dates else year == date2) |>
                mutate(recid_rate = case_when(ALL.BY  ~ recid_rate_year,
@@ -463,7 +459,8 @@ rr <- ggplot(tabout |>
   theme_classic() +
   #remove legend if plotting overall (not by year)
   {if(!ALL.BY) theme(legend.position="none")}+
-  labs(caption = capture.output(cat("The following programs were missing data in some years:", unique(toupper(prg.NA)), sep=" ")))+
+  #only print caption if a program is missing data
+  {if(length(prg.NA)!=0) labs(caption = capture.output(cat("The following programs were missing data in some years:", unique(toupper(prg.NA)), sep=" ")))}+
   theme(plot.caption=element_text(hjust=0))
 
 #display
@@ -495,6 +492,8 @@ tabout2 <- inner_join(roster2, staff2, by = ("programs_clean")) |>
   #correct missing values for recid_rate_all since this is the overall recidivism rate across multiple years
   group_by(programs_clean) |>
   fill(c(recid_rate_all,clients_served_all), .direction = "updown")
+#verify join was successful
+anti_join(roster2, staff2, by = ("programs_clean"))
 
 #calculate average recidivism rate across programs from all years
 unw.a <- round(mean(tabout2$recid_rate_all,na.rm=TRUE),2)
@@ -520,8 +519,8 @@ Well a recidivism rate of `r unw.a*100`% is much better, but it still doesn't ma
 ```{r giveemwhattheywant}
 #| ref-label: 'advreport'
 ```
-Alright! There's the number the advocacy group reported! But what's missing?
 
+Alright! There's the number the advocacy group reported! But what's missing?
 
 ```{r weighted1}
 #manage the data to produce recidivism rates
@@ -538,7 +537,7 @@ total.a5 <- sum(tabout2[which(tabout2$year==date1 & !tabout2$programs_clean %in%
 tabout2.wgt5 <- tabout2 |>
   filter(!(programs_clean %in% rm.pgms) & year==date1) |>
   mutate(recid_rate_all_w = clients_served_all*recid_rate_all)
-w.a5 <- round(sum(tabout2.wgt$recid_rate_all_w)/total.a5,2)
+w.a5 <- round(sum(tabout2.wgt5$recid_rate_all_w)/total.a5,2)
 print(paste0(w.a5*100,"%"))
 ```
 
