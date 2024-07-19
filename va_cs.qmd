@@ -146,15 +146,22 @@ staff <- data.frame(
   prg     = sample(prgnm2, size=sizen2, replace = TRUE)
   )
 
+###################################
+####write out dataframes to CSV####
+###################################
+write.csv(roster,"roster.csv", row.names = FALSE)
+write.csv(roster.update,"rosterupdate.csv", row.names = FALSE)
+write.csv(staff,"staff.csv", row.names = FALSE)
+
 ```
 
 ```{r toggle, echo=FALSE}
 #ANALYSIS TOGGLE
 ######################################
-roster  <- roster #options: roster; roster.update
+roster  <- roster        #options: roster; roster.update
 date1   <- date1         #options: date1 (within roster); date3 (within roster.update)
 date2   <- date2         #options: date2 (within roster); date4 (within roster.update)
-ALL.BY  <- T             #change to F if you want to plot recidivism rate over two years TOTAL (T if you want to stratify by year)
+ALL.BY  <- F             #change to F if you want to plot recidivism rate over two years TOTAL (T if you want to stratify by year)
 ######################################
 ```
 ```{r remove, echo=FALSE}
@@ -432,11 +439,12 @@ Nicer!!!
 ```{r dataviz1, warning=FALSE}
 #build bar chart of recidivism rates across programs
 #information to plot, pick dates
-dates <- as.numeric(as.vector(unique(tabout$year))) #what years of data do you want to plot?
+dates <- as.numeric(c(date1,date2)) #what years of data do you want to plot?
 
 #custom title header of plot
-titledates <- ifelse(length(dates)>=2 | !ALL.BY, paste0(date1," - ",date2),
-                     ifelse((dates==date1 | dates==date2) & ALL.BY, as.character(dates), ""))
+titledates <- ifelse(length(dates)>=2 & date1 != date2, paste0(date1," - ",date2),
+                     ifelse((dates==date1 | dates==date2) & ALL.BY, as.character(dates),
+                            ifelse(length(dates)>=2 & date1 == date2 & !ALL.BY,date1,"")))
 
 #which years/programs are missing data?
 prg.NA <- tabout |> 
@@ -577,25 +585,22 @@ rr + geom_hline(yintercept=w[1], linetype = "dashed", color = "orange", size = 1
   geom_label_repel(aes(label=lab, y=0.25), fill="orange",
              data = tabout |>
                filter(if(ALL.BY) year %in% dates else year == date2) |>
-               mutate(recid_rate = case_when(ALL.BY  ~ recid_rate_year,
+               mutate(recid_rate = case_when( ALL.BY  ~ recid_rate_year,
                                              !ALL.BY ~ recid_rate_all),
-                      lab        = case_when(ALL.BY ~ paste0(date1," Weighted avg: ",w[1],"\n",
-                                                             date2," Weighted avg: ",w[2]),
-                                             !ALL.BY ~ paste0(date1,"-",date2,"\nWeighted avg: ",w[1]))
-                      ) |>
+                      lab        = case_when( ALL.BY &  date1 != date2 ~ paste0(date1," Weighted avg: ",w[1],"\n",date2," Weighted avg: ",w[2]),
+                                             !ALL.BY &  date1 != date2 ~ paste0(date1,"-",date2,"\nWeighted avg: ",w[1]),
+                                              ALL.BY &  date1 == date2 ~ paste0(date1,"\nWeighted avg: ",w[1]))) |>
                filter(programs_clean == last & year == date2),
              nudge_x = -4,
-             min.segment.length = Inf
-  ) + 
+             min.segment.length = Inf) + 
   geom_label_repel(aes(label=lab, y=0.5), fill="grey",
              data = tabout |>
                filter(if(ALL.BY) year %in% dates else year == date2) |>
-               mutate(recid_rate = case_when(ALL.BY  ~ recid_rate_year,
+               mutate(recid_rate = case_when( ALL.BY  ~ recid_rate_year,
                                              !ALL.BY ~ recid_rate_all),
-                      lab        = case_when(ALL.BY ~ paste0(date1," Unweighted avg: ",unw[1],"\n",
-                                                             date2," Unweighted avg: ",unw[2]),
-                                             !ALL.BY ~ paste0(date1,"-",date2,"\nUnweighted avg: ",unw[1]))
-                      ) |>
+                      lab        = case_when( ALL.BY &  date1 != date2 ~ paste0(date1," Unweighted avg: ",unw[1],"\n",date2," Unweighted avg: ",unw[2]),
+                                             !ALL.BY &  date1 != date2 ~ paste0(date1,"-",date2,"\nUnweighted avg: ",unw[1]),
+                                              ALL.BY &  date1 == date2 ~ paste0(date1,"\nUnweighted avg: ",unw[1]))) |>
                filter(programs_clean == last & year == date2),
              nudge_x = -8,
              min.segment.length = Inf
