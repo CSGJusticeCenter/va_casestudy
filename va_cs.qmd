@@ -1,10 +1,5 @@
 ---
 title: "Advancing Data in Corrections: Virtual Academy Case Study"
-format: 
-  html:
-    embed-resources: true
-    code-fold: show
-    code-overflow: wrap
 ---
 
 ## Introduction
