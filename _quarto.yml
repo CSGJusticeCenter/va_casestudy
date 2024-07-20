@@ -1,0 +1,45 @@
+project:
+  type: book
+
+book:
+  title: "VA Summer Conference Case Study"
+  chapters:
+    - index.qmd
+    - va_cs.qmd
+  sidebar: 
+    logo: img/Virtual Academy_RGB.png
+  site-url: https://csg-va-casestudy.netlify.app/
+  favicon: img/adv-favicon.png
+  page-footer: 
+    background: "#265174"
+    center: |
+      ![](img/Virtual Academy_White.svg){fig-alt='Virtual Academy' width=354px}<br><br>
+      This project was supported by Grant No. 15PBJA-22-GK-01570-JRIX awarded by the Bureau of Justice Assistance. The Bureau of Justice Assistance is a component of the Department of Justice’s Office of Justice Programs, which also includes the Bureau of Justice Statistics, the National Institute of Justice, the Office of Juvenile Justice and Delinquency Prevention, the Office for Victims of Crime, and the SMART Office. Points of view or opinions in this document are those of the author and do not necessarily represent the official position or policies of the U.S. Department of Justice.
+
+knitr:
+  opts_chunk: 
+    collapse: true
+    results: "hold"
+    comment: "#>"
+
+format:
+  html:
+    theme:
+      - zephyr
+      - custom_theme.scss
+    grid:
+      sidebar-width: 300px
+      body-width: 860px
+      margin-width: 250px
+      gutter-width: 1.5em
+    mainfont: "Public Sans, sans-serif"
+    monofont: "monospace"
+    linkcolor: "#277CB4"
+    number-sections: false
+    toc: true
+    toc-title: "On this page"
+    link-external-icon: true
+    link-external-newwindow: true
+    code-fold: show
+    code-overflow: wrap
+    title-prefix: "ADC Virtual Academy"

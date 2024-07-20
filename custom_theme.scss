@@ -1,0 +1,36 @@
+/*-- scss:defaults --*/
+
+
+/*-- scss:rules --*/
+h1, h2, .sidebar-title {
+  font-weight: 800;
+}
+
+h1, h2, h3, h4, .sidebar-title, a:hover {
+  color: #265174;
+}
+
+
+.sidebar nav[role=doc-toc] ul>li>a.active, .sidebar nav[role=doc-toc] ul>li>ul>li>a.active, .sidebar nav[role=doc-toc] ul>li>a:hover, .sidebar nav[role=doc-toc] ul>li>ul>li>a:hover, .nav-page a:hover {
+  color: #277CB4 !important;
+}
+
+.sidebar nav[role=doc-toc] ul>li>a.active, .sidebar nav[role=doc-toc] ul>li>ul>li>a.active {
+  border-left: 1px solid #277CB4 !important;
+}
+
+.nav-footer-center {
+  text-align: left;
+  color: white;
+  font-size: 0.7em !important;
+  flex-grow: 6;
+}
+
+.nav-footer {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.sidebar-item {
+  margin-bottom: 0.7em;
+}

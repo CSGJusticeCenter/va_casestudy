@@ -67,3 +67,5 @@
 
 # stata 18 temp files
 *.stswp
+
+/.quarto/
