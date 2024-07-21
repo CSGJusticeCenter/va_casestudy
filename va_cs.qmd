@@ -1,5 +1,5 @@
 ---
-title: "Advancing Data in Corrections: Virtual Academy Case Study"
+title: "GDOC Recidivism Analysis"
 ---
 
 ## Introduction
@@ -20,7 +20,6 @@ Our DOC captures 10 Evidence Based Recidivism Reduction (EBRR) programs in 2021 
 Your DOC Research Department tracks clients served and staff involved in running and supporting these programs.
 
 ```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
-
 #packages
 #install.packages("charlatan")
 #install.packages("tidyr")
@@ -41,6 +40,10 @@ library(ggrepel)
 #programs
 #https://www.bop.gov/inmates/fsa/docs/fsa_program_guide_2107.pdf
 #https://www.bop.gov/inmates/fsa/docs/evidence_based_recidivism_reduction_programs.pdf
+
+#programs to remove
+#rm.pgms <- c("bcs", "brave", "sotrt", "mhsd", "resolve")
+
 prgnm = c("am,0","am,0","am,1",
           "brave,0","brave,0","brave,1",
           "bcs,0","bcs,0","bcs,1",
@@ -92,11 +95,20 @@ roster.prep <- data.frame(
   #create programs/returns to prison
   programs.temp= sample(prgnm, size=sizen, replace = TRUE),
   #create dates in programs
-  datestart    = sample(seq(as.Date(paste0(date1,'/01/01')), as.Date(paste0(date2,'/12/31')), by="day"), sizen)
+  datestart    = as.Date("2022-01-01") + round(rnorm(sizen, mean = 0, sd = 120))
   ) |>
   #split programs/returns
-  mutate(programs = substr(programs.temp,1,nchar(programs.temp)-2),
-         returns  = as.numeric(substr(programs.temp,nchar(programs.temp),nchar(programs.temp)))
+  mutate(programs  = substr(programs.temp,1,nchar(programs.temp)-2),
+         ret       = as.numeric(substr(programs.temp,nchar(programs.temp),nchar(programs.temp))),
+         #put in a random date to throw things off
+         datestart = case_when(row_number() == sizen-3  ~ as.Date(paste0('2001/06/05')), 
+                               row_number() == sizen-20 ~ as.Date(paste0('1991/08/22')),
+                            TRUE ~ datestart),
+         #put in a random return values
+         ret       = case_when(row_number() == sizen-10  ~ -1, 
+                               row_number() == sizen-30  ~ 11,
+                               row_number() == sizen-17  ~ 2,
+                            TRUE ~ ret)
          ) |>
   select(-c(programs.temp)) 
 
@@ -118,10 +130,10 @@ roster.update <- data.frame(
   client_names    = ch_name(sizen3),
   age             = round(rnorm(sizen3,29,5)),
   programs.temp   = sample(prgnm, size=sizen3, replace = TRUE),
-  datestart       = sample(seq(as.Date(paste0(date3,'/01/01')), as.Date(paste0(date4,'/12/31')), by="day"), 100)
+  datestart       = as.Date("2024-01-01") + round(rnorm(sizen, mean = 0, sd = 120))
   ) |>
   mutate(programs = substr(programs.temp,1,nchar(programs.temp)-2),
-         returns  = as.numeric(substr(programs.temp,nchar(programs.temp),nchar(programs.temp)))
+         ret  = as.numeric(substr(programs.temp,nchar(programs.temp),nchar(programs.temp)))
          ) |>
   select(-c(programs.temp))
 
@@ -156,9 +168,10 @@ write.csv(staff,"staff.csv", row.names = FALSE)
 roster  <- roster        #options: roster; roster.update
 date1   <- date1         #options: date1 (within roster); date3 (within roster.update)
 date2   <- date2         #options: date2 (within roster); date4 (within roster.update)
-ALL.BY  <- F             #change to F if you want to plot recidivism rate over two years TOTAL (T if you want to stratify by year)
+ALL.BY  <- T             #change to F if you want to plot recidivism rate over two years TOTAL (T if you want to stratify by year)
 ######################################
 ```
+
 ```{r remove, echo=FALSE}
 #programs to remove
 rm.pgms <- c("bcs", "brave", "sotrt", "mhsd", "resolve")
@@ -176,7 +189,7 @@ print(numcol)
 
 ```
 
-Interesting! It appears we have `r numcol` variables in the `roster` data! Let's just lift the hood a tiny bit more.
+Interesting! It appears we have `r numcol` variables in the `roster` data! What else do we see going on here? Let's just lift the hood a tiny bit more.
 
 ```{r explore2}
 #peek under the hood
@@ -187,11 +200,18 @@ Fascinating! It looks like person-level data! Let's learn more about some of the
 
 ```{r explore3}
 #distribution of returns
-hist(roster$returns)
+hist(roster$ret, breaks=20)
 
 #distribution of age
 hist(roster$age)
+
+#distribution of dates
+hist(roster$datestart, breaks=10)
 ```
+
+## Cleaning
+
+### Duplicates
 
 What other pieces of information might be relevant to what we need to know about the data? How about since it appears to be person-level that we check to make sure that there aren't any duplicates?
 
@@ -233,29 +253,60 @@ roster.nodup |>
   count(programs)
 ```
 
-Ah! It looks like there are some errors in your data! Clean them up so you can accurately report all EBRR programs and their associated recidivism rates
+### Recoding
+
+Ah! It looks like there are some errors in your data across `programs`, `ret`, and `datestart`! Clean them up so you can accurately report all EBRR programs and their associated recidivism rates. We'll probably have to make some assumptions on our data.
 
 ```{r cleanroster}
+
+#check out weird date values
+roster.nodup |>
+  count(year(datestart))
+
+#check out weird return values
+roster.nodup |>
+  count(ret)
+
 #clean program names
 roster.clean <- roster.nodup |>
+  #fix programs, dates, and returns
   mutate(programs_clean = case_when(programs == "bgs" ~ "bcs",
                                     programs == "fbt" ~ "dbt",
                                     programs == "brv" ~ "brave",
                                     programs == "rdp" ~ "rdap",
-                                    TRUE ~ programs))
+                                    TRUE ~ programs),
+         
+         #dates - assume that wrong dates occurred in 2021
+         datestart      = case_when(year(datestart) < 2021 ~ `year<-`(datestart, 2021),
+                                    TRUE ~ datestart),
+         
+         #returns - assume that wrong returns should all be =1
+         ret            = case_when(ret == -1 ~ 1,
+                                    ret == 2  ~ 1,
+                                    ret == 11 ~ 1,
+                                    TRUE ~ ret)
+         )
 
 #check cleaned program names
 roster.clean |>
   count(programs_clean,programs)
 
+#check date values
+roster.clean |>
+  count(year(datestart))
+
+#check out weird return values
+roster.clean |>
+  count(ret)
+
 ```
 
-Much better! 10 programs as expected for our DOC. Now let's see what's going on with this returns variable when cross-tabbed with our 10 programs.
+Much better! 10 programs as expected for our DOC, and cleaned dates and returns! Now let's see what's going on with this returns variable when cross-tabbed with our 10 programs.
 
 ```{r explore7}
 #recidivism by program count
 roster.clean |>
-  count(programs_clean,returns)
+  count(programs_clean,ret)
 
 ```
 
@@ -268,14 +319,14 @@ roster2.1 <- roster.clean |>
   mutate(year = factor(year(datestart))) |>
   select(-c(client_names,age,programs)) |>
   group_by(programs_clean) |>
-  count(returns) |>
+  count(ret) |>
   mutate(clients_served = sum(n),
-         recid_rate_all = case_when(returns == 1 ~ round(n/clients_served,2),
-                                returns == 0 ~ 0)
+         recid_rate_all = case_when(ret == 1 ~ round(n/clients_served,2),
+                                ret == 0 ~ 0)
          ) |>
   group_by(programs_clean) |>
   slice(n()) |>
-  select(-c(returns, n)) |>
+  select(-c(ret, n)) |>
   rename(clients_served_all = clients_served)
 #print out recidivism rates overall years
 roster2.1 |>
@@ -287,14 +338,14 @@ roster2.2 <- roster.clean |>
   mutate(year = factor(year(datestart))) |>
   select(-c(client_names,age,programs)) |>
   group_by(programs_clean,year) |>
-  count(returns,year) |>
+  count(ret,year) |>
   mutate(clients_served = sum(n),
-         recid_rate_year= case_when(returns == 1 ~ round(n/clients_served,2),
-                                returns == 0 ~ 0)
+         recid_rate_year= case_when(ret == 1 ~ round(n/clients_served,2),
+                                ret == 0 ~ 0)
          ) |>
   group_by(programs_clean,year) |>
   slice(n()) |>
-  select(-c(returns, n)) |>
+  select(-c(ret, n)) |>
   rename(clients_served_year = clients_served)
 #print out recidivism rates by year
 roster2.2 |>
@@ -385,6 +436,8 @@ hist(staff2$num_staff)
 
 ## Reporting Results
 
+### Data Visualizations
+
 We have to get out those results **now!** Let's combine the program staff and recidivism rates dataframes so we can print out a table!
 
 ```{r merge}
@@ -429,6 +482,7 @@ ggplot(tabout,aes(x=programs_clean, y=recid_rate_year,fill=year)) +
          geom_bar(position="dodge", stat="identity")
 
 ```
+
 Nicer!!!
 
 ```{r dataviz1, warning=FALSE}
@@ -470,6 +524,8 @@ rr <- ggplot(tabout |>
 rr
 
 ```
+
+### CWC Damned Lies and Statistics
 
 ```{r advreport, echo=FALSE, include=FALSE}
 #remove 5 of the 10 programs because the advocacy group was sneaky
@@ -523,12 +579,14 @@ Well a recidivism rate of `r unw.a*100`% is much better, but it still doesn't ma
 #| ref-label: 'advreport'
 ```
 
+### Data-Informed Reporting
+
 Alright! There's the number the advocacy group reported! But what's missing?
 
 ```{r weighted1}
 #manage the data to produce recidivism rates
 #total clients served (all years)
-total.a <- sum(tabout2[which(tabout2$year==date1),]$clients_served_all)
+total.a <- sum(tabout2[which(tabout2$year==date1),]$clients_served_all, na.rm=TRUE)
 tabout2.wgt <- tabout2 |>
   filter(year==date1) |>
   mutate(recid_rate_all_w = clients_served_all*recid_rate_all)
@@ -536,7 +594,7 @@ w.a <- round(sum(tabout2.wgt$recid_rate_all_w)/total.a,2)
 print(paste0(w.a*100,"%"))
 
 #total clients served (all years), JUST 5 PROGRAMS!!!
-total.a5 <- sum(tabout2[which(tabout2$year==date1 & !tabout2$programs_clean %in% rm.pgms),]$clients_served_all)
+total.a5 <- sum(tabout2[which(tabout2$year==date1 & !tabout2$programs_clean %in% rm.pgms),]$clients_served_all, na.rm=TRUE)
 tabout2.wgt5 <- tabout2 |>
   filter(!(programs_clean %in% rm.pgms) & year==date1) |>
   mutate(recid_rate_all_w = clients_served_all*recid_rate_all)
@@ -555,7 +613,7 @@ tabout2.wgt <- tabout2 |>
 w.d1 <- round(sum(tabout2.wgt$recid_rate_year_w,na.rm=TRUE)/total.d1,2)
 
 #total clients served (year2)
-total.d2 <- sum(tabout2[which(tabout2$year==date2),]$clients_served_year)
+total.d2 <- sum(tabout2[which(tabout2$year==date2),]$clients_served_year,na.rm=TRUE)
 tabout2.wgt <- tabout2 |>
   filter(year==date2) |>
   mutate(recid_rate_year_w = clients_served_year*recid_rate_year)
@@ -603,7 +661,7 @@ rr + geom_hline(yintercept=w[1], linetype = "dashed", color = "orange", size = 1
 
 ```
 
-Uh oh! Looks like a new roster was just dropped with more years of data. Quick! Redo the analysis with the new data!
+## R Session
 
 ```{r}
 #for reproducibility

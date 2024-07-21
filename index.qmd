@@ -4,7 +4,7 @@ As part of an ongoing staffing crisis, you have been asked by your director to r
 
 ## Case Study Narrative
 
-### [Scenario](va_cs.html)
+### [GDOC Recidivism Analysis](va_cs.html)
 
 Amidst a swirling staffing crisis at the Gotham Department of Corrections (GDOC), you find yourself in a peculiar predicament. Your director, the fearsome Evelyn "Firebrand" Summers, has thrust upon you the Herculean task of resurrecting a report forged under the previous Research Director Miranda "Mermaid" Shelsky. Dr. Shelsky, now retired and sipping mojitos on a secluded beach in Fiji, left behind a report detailing recidivism rates and the indispensable staffing needs for DOC's prized programs. 
 
@@ -20,4 +20,4 @@ You’re in a tight bind, and time is ticking. Not to mention, your best friend 
 
 The Advancing Data in Corrections initiative includes a [Virtual Academy](https://advancingdataincorrections.org/va), which builds data literacy and analytic capabilities within departments of corrections nationwide to further data-informed planning and decision-making. Through their participation in the Virtual Academy, corrections agency staff can access the program’s self-paced learning materials, community forum, peer-to-peer networks, and technical assistance at no cost.
 
-For more information about the program and the tools, services, and opportunies available, visit the [Virtual Academy website](https://advancingdataincorrections.org/va).
+For more information about the program and the tools, services, and opportunities available, visit the [Virtual Academy website](https://advancingdataincorrections.org/va).
