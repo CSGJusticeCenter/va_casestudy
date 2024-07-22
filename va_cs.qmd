@@ -164,9 +164,9 @@ write.csv(staff,"staff.csv", row.names = FALSE)
 ```{r toggle, echo=FALSE}
 #ANALYSIS TOGGLE
 ######################################
-roster  <- roster.update        #options: roster; roster.update
-date1   <- date3         #options: date1 (within roster); date3 (within roster.update)
-date2   <- date4         #options: date2 (within roster); date4 (within roster.update)
+roster  <- roster        #options: roster; roster.update
+date1   <- date1         #options: date1 (within roster); date3 (within roster.update)
+date2   <- date2         #options: date2 (within roster); date4 (within roster.update)
 ALL.BY  <- T             #change to F if you want to plot recidivism rate over two years TOTAL (T if you want to stratify by year)
 
 #colors
@@ -693,8 +693,8 @@ head(tabout.dates)
 
 ```{r dataviz4, echo=FALSE, warning=FALSE, message=FALSE, include=FALSE}
 #| code-fold: true
-
-#overwrite value of rates to overall if ALL.By
+#make some really cool horizontal floating dot charts!
+#overwrite value of rates to overall if ALL.BY
 {if(!ALL.BY) tabout.dates$recid_rate_date1 <- tabout.dates$recid_rate_all}
 
 #plot two years or one year depending on ALL.BY setting
@@ -769,7 +769,7 @@ What are some more engaging ways we can plot recidivism rates for leadership and
 #| ref-label: 'dataviz4'
 ```
 
-```{r dataviz6, warning=FALSE, message=FALSE, eval=!ALL.BY}
+```{r dataviz6, warning=FALSE, message=FALSE}
 #| code-fold: true
 
 ##horizontal lollipop chart
