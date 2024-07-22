@@ -2,7 +2,7 @@ project:
   type: book
 
 book:
-  title: "VA Summer Conference Case Study"
+  title: "Summer Conference Case Study"
   chapters:
     - index.qmd
     - va_cs.qmd
@@ -19,11 +19,11 @@ book:
 knitr:
   opts_chunk: 
     collapse: true
-    results: "hold"
     comment: "#>"
 
 format:
   html:
+    df-print: paged
     theme:
       - zephyr
       - custom_theme.scss

@@ -1,5 +1,5 @@
 ---
-title: "Advancing Data in Corrections: Virtual Academy Case Study"
+title: "GDOC Recidivism Analysis"
 ---
 
 ## Introduction
@@ -20,9 +20,9 @@ Our DOC captures 10 Evidence Based Recidivism Reduction (EBRR) programs in 2021 
 Your DOC Research Department tracks clients served and staff involved in running and supporting these programs.
 
 ```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
-
 #packages
 #install.packages("charlatan")
+#install.packages("tidyverse")
 #install.packages("tidyr")
 #install.packages("dplyr")
 #install.packages("knitr")
@@ -32,6 +32,7 @@ Your DOC Research Department tracks clients served and staff involved in running
 #activate!!
 library(charlatan)
 library(lubridate)
+library(tidyverse)
 library(tidyr)
 library(dplyr)
 library(knitr)
@@ -41,6 +42,7 @@ library(ggrepel)
 #programs
 #https://www.bop.gov/inmates/fsa/docs/fsa_program_guide_2107.pdf
 #https://www.bop.gov/inmates/fsa/docs/evidence_based_recidivism_reduction_programs.pdf
+
 prgnm = c("am,0","am,0","am,1",
           "brave,0","brave,0","brave,1",
           "bcs,0","bcs,0","bcs,1",
@@ -92,11 +94,20 @@ roster.prep <- data.frame(
   #create programs/returns to prison
   programs.temp= sample(prgnm, size=sizen, replace = TRUE),
   #create dates in programs
-  datestart    = sample(seq(as.Date(paste0(date1,'/01/01')), as.Date(paste0(date2,'/12/31')), by="day"), sizen)
+  datestart    = as.Date("2022-01-01") + round(rnorm(sizen, mean = 0, sd = 120))
   ) |>
   #split programs/returns
-  mutate(programs = substr(programs.temp,1,nchar(programs.temp)-2),
-         returns  = as.numeric(substr(programs.temp,nchar(programs.temp),nchar(programs.temp)))
+  mutate(programs  = substr(programs.temp,1,nchar(programs.temp)-2),
+         ret       = as.numeric(substr(programs.temp,nchar(programs.temp),nchar(programs.temp))),
+         #put in a random date to throw things off
+         datestart = case_when(row_number() == sizen-3  ~ as.Date(paste0('2001/06/05')), 
+                               row_number() == sizen-20 ~ as.Date(paste0('1991/08/22')),
+                            TRUE ~ datestart),
+         #put in a random return values
+         ret       = case_when(row_number() == sizen-10  ~ -1, 
+                               row_number() == sizen-30  ~ 11,
+                               row_number() == sizen-17  ~ 2,
+                            TRUE ~ ret)
          ) |>
   select(-c(programs.temp)) 
 
@@ -118,10 +129,10 @@ roster.update <- data.frame(
   client_names    = ch_name(sizen3),
   age             = round(rnorm(sizen3,29,5)),
   programs.temp   = sample(prgnm, size=sizen3, replace = TRUE),
-  datestart       = sample(seq(as.Date(paste0(date3,'/01/01')), as.Date(paste0(date4,'/12/31')), by="day"), 100)
+  datestart       = as.Date("2024-01-01") + round(rnorm(sizen, mean = 0, sd = 120))
   ) |>
   mutate(programs = substr(programs.temp,1,nchar(programs.temp)-2),
-         returns  = as.numeric(substr(programs.temp,nchar(programs.temp),nchar(programs.temp)))
+         ret  = as.numeric(substr(programs.temp,nchar(programs.temp),nchar(programs.temp)))
          ) |>
   select(-c(programs.temp))
 
@@ -153,12 +164,21 @@ write.csv(staff,"staff.csv", row.names = FALSE)
 ```{r toggle, echo=FALSE}
 #ANALYSIS TOGGLE
 ######################################
-roster  <- roster        #options: roster; roster.update
-date1   <- date1         #options: date1 (within roster); date3 (within roster.update)
-date2   <- date2         #options: date2 (within roster); date4 (within roster.update)
-ALL.BY  <- F             #change to F if you want to plot recidivism rate over two years TOTAL (T if you want to stratify by year)
+roster  <- roster.update        #options: roster; roster.update
+date1   <- date3         #options: date1 (within roster); date3 (within roster.update)
+date2   <- date4         #options: date2 (within roster); date4 (within roster.update)
+ALL.BY  <- T             #change to F if you want to plot recidivism rate over two years TOTAL (T if you want to stratify by year)
+
+#colors
+date1c  <- "deepskyblue1"
+date2c  <- "darkolivegreen3"
+staffc  <- "brown"
+hlinew1 <- "orange"
+hlinew2 <- "darkgrey"
+
 ######################################
 ```
+
 ```{r remove, echo=FALSE}
 #programs to remove
 rm.pgms <- c("bcs", "brave", "sotrt", "mhsd", "resolve")
@@ -176,7 +196,7 @@ print(numcol)
 
 ```
 
-Interesting! It appears we have `r numcol` variables in the `roster` data! Let's just lift the hood a tiny bit more.
+Interesting! It appears we have `r numcol` variables in the `roster` data! What else do we see going on here? Let's just lift the hood a tiny bit more.
 
 ```{r explore2}
 #peek under the hood
@@ -187,11 +207,18 @@ Fascinating! It looks like person-level data! Let's learn more about some of the
 
 ```{r explore3}
 #distribution of returns
-hist(roster$returns)
+hist(roster$ret, breaks=20)
 
 #distribution of age
 hist(roster$age)
+
+#distribution of dates
+hist(roster$datestart, breaks=10)
 ```
+
+## Cleaning
+
+### Duplicates
 
 What other pieces of information might be relevant to what we need to know about the data? How about since it appears to be person-level that we check to make sure that there aren't any duplicates?
 
@@ -233,29 +260,60 @@ roster.nodup |>
   count(programs)
 ```
 
-Ah! It looks like there are some errors in your data! Clean them up so you can accurately report all EBRR programs and their associated recidivism rates
+### Recoding
+
+Ah! It looks like there are some errors in your data across `programs`, `ret`, and `datestart`! Clean them up so you can accurately report all EBRR programs and their associated recidivism rates. We'll probably have to make some assumptions on our data.
 
 ```{r cleanroster}
+
+#check out weird date values
+roster.nodup |>
+  count(year(datestart))
+
+#check out weird return values
+roster.nodup |>
+  count(ret)
+
 #clean program names
 roster.clean <- roster.nodup |>
+  #fix programs, dates, and returns
   mutate(programs_clean = case_when(programs == "bgs" ~ "bcs",
                                     programs == "fbt" ~ "dbt",
                                     programs == "brv" ~ "brave",
                                     programs == "rdp" ~ "rdap",
-                                    TRUE ~ programs))
+                                    TRUE ~ programs),
+         
+         #dates - assume that wrong dates occurred in 2021
+         datestart      = case_when(year(datestart) < 2021 ~ `year<-`(datestart, 2021),
+                                    TRUE ~ datestart),
+         
+         #returns - assume that wrong returns should all be =1
+         ret            = case_when(ret == -1 ~ 1,
+                                    ret == 2  ~ 1,
+                                    ret == 11 ~ 1,
+                                    TRUE ~ ret)
+         )
 
 #check cleaned program names
 roster.clean |>
   count(programs_clean,programs)
 
+#check date values
+roster.clean |>
+  count(year(datestart))
+
+#check out weird return values
+roster.clean |>
+  count(ret)
+
 ```
 
-Much better! 10 programs as expected for our DOC. Now let's see what's going on with this returns variable when cross-tabbed with our 10 programs.
+Much better! 10 programs as expected for our DOC, and cleaned dates and returns! Now let's see what's going on with this returns variable when cross-tabbed with our 10 programs.
 
 ```{r explore7}
 #recidivism by program count
 roster.clean |>
-  count(programs_clean,returns)
+  count(programs_clean,ret)
 
 ```
 
@@ -268,14 +326,14 @@ roster2.1 <- roster.clean |>
   mutate(year = factor(year(datestart))) |>
   select(-c(client_names,age,programs)) |>
   group_by(programs_clean) |>
-  count(returns) |>
+  count(ret) |>
   mutate(clients_served = sum(n),
-         recid_rate_all = case_when(returns == 1 ~ round(n/clients_served,2),
-                                returns == 0 ~ 0)
+         recid_rate_all = case_when(ret == 1 ~ round(n/clients_served,2),
+                                ret == 0 ~ 0)
          ) |>
   group_by(programs_clean) |>
   slice(n()) |>
-  select(-c(returns, n)) |>
+  select(-c(ret, n)) |>
   rename(clients_served_all = clients_served)
 #print out recidivism rates overall years
 roster2.1 |>
@@ -287,14 +345,14 @@ roster2.2 <- roster.clean |>
   mutate(year = factor(year(datestart))) |>
   select(-c(client_names,age,programs)) |>
   group_by(programs_clean,year) |>
-  count(returns,year) |>
+  count(ret,year) |>
   mutate(clients_served = sum(n),
-         recid_rate_year= case_when(returns == 1 ~ round(n/clients_served,2),
-                                returns == 0 ~ 0)
+         recid_rate_year= case_when(ret == 1 ~ round(n/clients_served,2),
+                                ret == 0 ~ 0)
          ) |>
   group_by(programs_clean,year) |>
   slice(n()) |>
-  select(-c(returns, n)) |>
+  select(-c(ret, n)) |>
   rename(clients_served_year = clients_served)
 #print out recidivism rates by year
 roster2.2 |>
@@ -385,6 +443,8 @@ hist(staff2$num_staff)
 
 ## Reporting Results
 
+### Data Visualizations
+
 We have to get out those results **now!** Let's combine the program staff and recidivism rates dataframes so we can print out a table!
 
 ```{r merge}
@@ -429,6 +489,7 @@ ggplot(tabout,aes(x=programs_clean, y=recid_rate_year,fill=year)) +
          geom_bar(position="dodge", stat="identity")
 
 ```
+
 Nicer!!!
 
 ```{r dataviz1, warning=FALSE}
@@ -439,7 +500,7 @@ dates <- as.numeric(c(date1,date2)) #what years of data do you want to plot?
 #custom title header of plot
 titledates <- ifelse(length(dates)>=2 & date1 != date2, paste0(date1," - ",date2),
                      ifelse((dates==date1 | dates==date2) & ALL.BY, as.character(dates),
-                            ifelse(length(dates)>=2 & date1 == date2 & !ALL.BY,date1,"")))
+                            ifelse(!ALL.BY, date1, "")))
 
 #which years/programs are missing data?
 prg.NA <- tabout |> 
@@ -453,8 +514,8 @@ rr <- ggplot(tabout |>
                                              !ALL.BY ~ recid_rate_all))
              ,aes(x=programs_clean, y=recid_rate, fill=year)) +
   geom_bar(position = "dodge",stat = "identity") +
-  geom_text(aes(label=ifelse(year==dates[2],paste(num_staff,"staff"),"")), vjust=-0.3, color = "brown") +
-  scale_fill_manual(values=c("lightblue", "darkolivegreen3")) +
+  geom_text(aes(label=ifelse(year==dates[2],paste(num_staff,"staff"),"")), vjust=-0.3, color = staffc) +
+  scale_fill_manual(values=c(date1c,date2c)) +
   ylim(0,1) +
   ylab("Recidivism Rate") +
   xlab("EBBR Programs") +
@@ -470,6 +531,8 @@ rr <- ggplot(tabout |>
 rr
 
 ```
+
+### CWC Damned Lies and Statistics
 
 ```{r advreport, echo=FALSE, include=FALSE}
 #remove 5 of the 10 programs because the advocacy group was sneaky
@@ -515,7 +578,7 @@ print(paste0(unw.d2*100,"%"))
 Well a recidivism rate of `r unw.a*100`% is much better, but it still doesn't match what the advocacy group is reporting! Keep investigating! 
 
 ```{r}
-#| ref-label: remove
+#| ref-label: 'remove'
 ```
 
 
@@ -523,12 +586,14 @@ Well a recidivism rate of `r unw.a*100`% is much better, but it still doesn't ma
 #| ref-label: 'advreport'
 ```
 
+### Data-Informed Reporting
+
 Alright! There's the number the advocacy group reported! But what's missing?
 
 ```{r weighted1}
 #manage the data to produce recidivism rates
 #total clients served (all years)
-total.a <- sum(tabout2[which(tabout2$year==date1),]$clients_served_all)
+total.a <- sum(tabout2[which(tabout2$year==date1),]$clients_served_all, na.rm=TRUE)
 tabout2.wgt <- tabout2 |>
   filter(year==date1) |>
   mutate(recid_rate_all_w = clients_served_all*recid_rate_all)
@@ -536,7 +601,7 @@ w.a <- round(sum(tabout2.wgt$recid_rate_all_w)/total.a,2)
 print(paste0(w.a*100,"%"))
 
 #total clients served (all years), JUST 5 PROGRAMS!!!
-total.a5 <- sum(tabout2[which(tabout2$year==date1 & !tabout2$programs_clean %in% rm.pgms),]$clients_served_all)
+total.a5 <- sum(tabout2[which(tabout2$year==date1 & !tabout2$programs_clean %in% rm.pgms),]$clients_served_all, na.rm=TRUE)
 tabout2.wgt5 <- tabout2 |>
   filter(!(programs_clean %in% rm.pgms) & year==date1) |>
   mutate(recid_rate_all_w = clients_served_all*recid_rate_all)
@@ -555,7 +620,7 @@ tabout2.wgt <- tabout2 |>
 w.d1 <- round(sum(tabout2.wgt$recid_rate_year_w,na.rm=TRUE)/total.d1,2)
 
 #total clients served (year2)
-total.d2 <- sum(tabout2[which(tabout2$year==date2),]$clients_served_year)
+total.d2 <- sum(tabout2[which(tabout2$year==date2),]$clients_served_year,na.rm=TRUE)
 tabout2.wgt <- tabout2 |>
   filter(year==date2) |>
   mutate(recid_rate_year_w = clients_served_year*recid_rate_year)
@@ -573,11 +638,11 @@ unw <- if(ALL.BY) c(unw.d1,unw.d2) else unw.a
 last <- tail(tabout$programs_clean,n=1)
 
 #add recidivism weight averages to plot
-rr + geom_hline(yintercept=w[1], linetype = "dashed", color = "orange", size = 1) +
-  {if(ALL.BY) geom_hline(yintercept=w[2], linetype = "dashed", color = "orange", size = 1)}+
-  geom_hline(yintercept=unw[1], linetype = "dashed", color = "darkgrey", size = 1) +
-  {if(ALL.BY) geom_hline(yintercept=unw[2], linetype = "dashed", color = "darkgrey", size = 1)}+
-  geom_label_repel(aes(label=lab, y=0.25), fill="orange",
+rr + geom_hline(yintercept=w[1], linetype = "dashed", color = hlinew1, size = 1) +
+  {if(ALL.BY) geom_hline(yintercept=w[2], linetype = "dashed", color = hlinew1, size = 1)}+
+  geom_hline(yintercept=unw[1], linetype = "dashed", color = hlinew2, size = 1) +
+  {if(ALL.BY) geom_hline(yintercept=unw[2], linetype = "dashed", color = hlinew2, size = 1)}+
+  geom_label_repel(aes(label=lab, y=0.25), fill=hlinew1,
              data = tabout |>
                filter(if(ALL.BY) year %in% dates else year == date2) |>
                mutate(recid_rate = case_when( ALL.BY  ~ recid_rate_year,
@@ -588,7 +653,7 @@ rr + geom_hline(yintercept=w[1], linetype = "dashed", color = "orange", size = 1
                filter(programs_clean == last & year == date2),
              nudge_x = -4,
              min.segment.length = Inf) + 
-  geom_label_repel(aes(label=lab, y=0.5), fill="grey",
+  geom_label_repel(aes(label=lab, y=0.5), fill=hlinew2,
              data = tabout |>
                filter(if(ALL.BY) year %in% dates else year == date2) |>
                mutate(recid_rate = case_when( ALL.BY  ~ recid_rate_year,
@@ -603,9 +668,251 @@ rr + geom_hline(yintercept=w[1], linetype = "dashed", color = "orange", size = 1
 
 ```
 
-Uh oh! Looks like a new roster was just dropped with more years of data. Quick! Redo the analysis with the new data!
+## More Cool Data Viz!
+
+Let's prepare our data to do some really fun data viz!
+
+```{r dataviz3}
+#this code will run if plotting data for multiple years, otherwise nothing will be produced (i.e., ALL.BY <- T)
+
+#manipulate data for plotting
+tabout.date1 <- tabout |>
+  filter(year==date1) |>
+  select(c(recid_rate_year, programs_clean, recid_rate_all)) |>
+  rename(recid_rate_date1 = recid_rate_year)
+tabout.date2 <- tabout |>
+  filter(year==date2) |>
+  select(c(recid_rate_year, programs_clean)) |>
+  rename(recid_rate_date2 = recid_rate_year)
+tabout.dates <- inner_join(tabout.date1, tabout.date2, by = "programs_clean") |>
+  select(programs_clean, recid_rate_date1, recid_rate_date2, recid_rate_all)
+
+head(tabout.dates)
+
+```
+
+```{r dataviz4, echo=FALSE, warning=FALSE, message=FALSE, include=FALSE}
+#| code-fold: true
+
+#overwrite value of rates to overall if ALL.By
+{if(!ALL.BY) tabout.dates$recid_rate_date1 <- tabout.dates$recid_rate_all}
+
+#plot two years or one year depending on ALL.BY setting
+{if(ALL.BY) plotit <- c(tabout.dates[which(tabout.dates$programs_clean=="stages"),]$recid_rate_date1, tabout.dates[which(tabout.dates$programs_clean=="stages"),]$recid_rate_date2) else plotit <- tabout.dates[which(tabout.dates$programs_clean=="stages"),]$recid_rate_date1}
+
+#remove label legend if by year
+{if(ALL.BY) titledates2 <- c(as.factor(date1),as.factor(date2)) else titledates2 <- ""}
+
+#plot!
+gg_dot <- tabout.dates |>
+  # rearrange the factor levels for programs by rates for date1
+  arrange(recid_rate_date1) |>
+  mutate(discipline = fct_inorder(programs_clean)) |>
+  
+  ggplot() +
+  # remove axes and superfluous grids
+  theme_classic() +
+  theme(axis.title = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.line = element_blank()) +
+  
+  # add a dummy point for scaling purposes
+  geom_point(aes(x = 0.7, y = programs_clean), 
+             size = 0, col = "white") + 
+  
+  # add the horizontal programs_clean lines
+  geom_hline(yintercept = 1:length(tabout.dates$programs_clean), col = "grey80") +
+  
+  # add a point for each date1 recidivism rate
+  geom_point(aes(x = recid_rate_date1, y = programs_clean), 
+             size = 11, col = date1c) +
+
+  # add a point for each date2 recidivism rate
+ {if(ALL.BY) geom_point(aes(x = recid_rate_date2, y = programs_clean),size = 11, col = date2c)} + 
+
+  # round each date2 recidivism rate
+  {if(ALL.BY) geom_text(aes(x = recid_rate_date2, y = programs_clean, label = paste0(round(recid_rate_date2, 2))), col = "black")} +
+
+  # round each date1 recidivism rate
+  geom_text(aes(x = recid_rate_date1, y = programs_clean, 
+                label = paste0(round(recid_rate_date1, 2))),
+            col = "white") +
+
+  # add a label above the first two points
+  geom_text(aes(x = x, y = y, label = label, col = label),
+            data.frame(x     = plotit, 
+                       y     = length(tabout.dates$programs_clean) + 1, 
+                       label = titledates2), size = 6) +
+  scale_color_manual(values = c(date1c, date2c), guide = "none") +
+  
+  # manually specify the x-axis
+  scale_x_continuous(breaks = c(0, 0.25, 0.5, 0.75, 1), 
+                     labels = c("0","0.25", "0.50", "0.75", "1")) +
+  # manually set the spacing above and below the plot
+  scale_y_discrete(expand = c(0.2, 0)) 
+
+#add titles/captions
+gg_dot + 
+  {if (ALL.BY) ggtitle("Recidivism Rates across EBBR programs\n") else ggtitle(paste0("Recidivism Rates across EBBR programs\n",titledates))} +
+  #only print caption if a program is missing data
+  {if(length(prg.NA)!=0) labs(caption = capture.output(cat("The following programs were missing data in some years:", unique(toupper(prg.NA)), sep=" ")))}+
+  theme(plot.caption=element_text(hjust=0))
+
+```
+
+### Plotting Overall
+
+What are some more engaging ways we can plot recidivism rates for leadership and our stakeholders overall for these programs?
+
+```{r dataviz5, eval=!ALL.BY}
+#| code-fold: true
+#| ref-label: 'dataviz4'
+```
+
+```{r dataviz6, warning=FALSE, message=FALSE, eval=!ALL.BY}
+#| code-fold: true
+
+##horizontal lollipop chart
+ggplot(tabout, aes(x=programs_clean, y=recid_rate_all)) +
+  geom_segment( aes(x=programs_clean, xend=programs_clean, y=0, yend=recid_rate_all), color=date1c) +
+  geom_point( color=staffc, size=4, alpha=0.6) +
+  theme_light() +
+  coord_flip() +
+  xlab("EBBR Programs") +
+  ylab("Recidivism Rate") +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks.y = element_blank()
+  ) + 
+  ggtitle(paste0("Recidivism Rates across EBBR programs\n",titledates)) +
+  theme(plot.caption=element_text(hjust=0)) +
+  #only print caption if a program is missing data
+  {if(length(prg.NA)!=0) labs(caption = capture.output(cat("The following programs were missing data in some years:", unique(toupper(prg.NA)), sep=" ")))}
+
+##horizontal lollipop chart w/weighted average
+ggplot(tabout, aes(x=programs_clean, y=recid_rate_all)) +
+  geom_segment(aes(x=programs_clean, xend=programs_clean, y=w.a, yend=recid_rate_all), color=date1c) +
+  geom_point(color=staffc, size=4, alpha=0.6) +
+  geom_hline(yintercept=w.a, linetype = "dashed", color = hlinew1, size = 1) +
+  geom_label(aes(label=paste0("Weighted avg: ",w.a), x=w.a, vjust = -10, hjust = 1.5), fill=hlinew1,
+                  data = tabout |>
+               filter(programs_clean == last & year == date2)) +
+  theme_light() +
+  coord_flip() +
+  xlab("EBBR Programs") +
+  ylab("Recidivism Rate") +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks.y = element_blank()
+  ) + 
+  ggtitle(paste0("Recidivism Rates across EBBR programs\n",titledates)) +
+  #only print caption if a program is missing data
+  {if(length(prg.NA)!=0) labs(caption = capture.output(cat("The following programs were missing data in some years:", unique(toupper(prg.NA)), sep=" ")))}+
+  theme(plot.caption=element_text(hjust=0))
+
+
+```
+
+
+
+### Plotting by Year
+
+What about displaying these rates by year?
+
+```{r dataviz7, eval=ALL.BY}
+#| code-fold: true
+#| ref-label: 'dataviz4'
+```
+
+```{r dataviz8, warning=FALSE, message=FALSE, eval=ALL.BY}
+#| code-fold: true
+#plot!
+gg_line <- tabout.dates |>
+  # add a variable for when rates are higher in date1 than in date2 (for colours)
+  mutate(date1high = recid_rate_date1 > recid_rate_date2) |>
+  ggplot() +
+  # add a line segment that goes from date1 to date2 for each program
+  geom_segment(aes(x     = 1,                xend = 2, 
+                   y     = recid_rate_date1, yend = recid_rate_date2,
+                   group = programs_clean,
+                   col = date1high), 
+               size = 1.2) +
+  # set the colors
+  scale_color_manual(values = c(date1c, date2c), guide = "none")  +
+  # remove all axis stuff
+  theme_classic() + 
+  theme(axis.line  = element_blank(),
+        axis.text  = element_blank(),
+        axis.title = element_blank(),
+        axis.ticks = element_blank()) +
+  # add vertical lines that act as axis for date1
+  geom_segment(x    = 1, 
+               xend = 1, 
+               y    = min(tabout.dates$recid_rate_date1, na.rm=T) - 0.1,
+               yend = max(tabout.dates$recid_rate_date1, na.rm=T) + 0.125,
+               col  = "grey70", size = 0.5) +
+  # add vertical lines that act as axis for date2
+  geom_segment(x    = 2, 
+               xend = 2, 
+               y    = min(tabout.dates$recid_rate_date1, na.rm=T) - 0.1,
+               yend = max(tabout.dates$recid_rate_date1, na.rm=T) + 0.125,
+               col  = "grey70", size = 0.5) +
+  # add the labels above their axes
+  geom_text(aes(x = x, y = y, label = label),
+            data = data.frame(x = 1:2, 
+                              y = max(tabout.dates$recid_rate_date2, na.rm=T) + 0.05,
+                              label = c(date1, date2)),
+            col = "grey30",
+            size = 6)  +
+  # add the label and rate for each program next the date1 axis
+  geom_text_repel(aes(x     = 1 - 0.03, 
+                      y     = recid_rate_date1, 
+                      label = paste0(programs_clean, ", ", round(recid_rate_date1, 2))),
+             force_pull   = 0,
+             nudge_y      = 0.05, nudge_x = -0.075,
+             direction    = "y",
+             hjust        = 1,
+             segment.size = 0.2,
+             max.iter = 1e4, max.time = 1) +
+  # add the rate next to each point on the date2 axis
+  geom_text(aes(x = 2 + 0.08, 
+                y = recid_rate_date2, 
+                label = paste0(round(recid_rate_date2, 2))),
+            col = "grey30") +
+  # set the limits of the x-axis so that the labels are not cut off
+  scale_x_continuous(limits = c(0.5, 2.1)) + 
+  
+  # add the white outline for the points at each rate for date1
+  geom_point(aes(x = 1, 
+                 y = recid_rate_date1), size = 4.5,
+             col = "white") +
+  # add the white outline for the points at each rate for date2
+  geom_point(aes(x = 2, 
+                 y = recid_rate_date2), size = 4.5,
+             col = "white") +
+  
+  # add the actual points at each rate for date1
+  geom_point(aes(x = 1, 
+                 y = recid_rate_date1), size = 4,
+             col = "grey60") +
+  # add the actual points at each rate for date2
+  geom_point(aes(x = 2, 
+                 y = recid_rate_date2), size = 4,
+             col = "grey60") 
+  
+gg_line +
+  ggtitle("Recidivism Rates across EBBR programs\n") +
+  #only print caption if a program is missing data
+  {if(length(prg.NA)!=0) labs(caption = capture.output(cat("The following programs were missing data in some years:", unique(toupper(prg.NA)), sep=" ")))}+
+  theme(plot.caption=element_text(hjust=0))
+```
+
+## R Session
 
 ```{r}
+#| code-fold: true
 #for reproducibility
 si <- sessioninfo::session_info()
 si$packages$library <- NULL

@@ -1,0 +1,4 @@
+- source: project
+  netlify:
+    - id: a25f391e-3b68-4d72-bd1d-08fbe3a02a40
+      url: 'https://csg-va-casestudy.netlify.app'
