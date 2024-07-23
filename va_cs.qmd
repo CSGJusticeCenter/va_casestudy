@@ -164,9 +164,9 @@ write.csv(staff,"staff.csv", row.names = FALSE)
 ```{r toggle, echo=FALSE}
 #ANALYSIS TOGGLE
 ######################################
-roster  <- roster.update        #options: roster; roster.update
-date1   <- date3         #options: date1 (within roster); date3 (within roster.update)
-date2   <- date4         #options: date2 (within roster); date4 (within roster.update)
+roster  <- roster        #options: roster; roster.update
+date1   <- date1         #options: date1 (within roster); date3 (within roster.update)
+date2   <- date2         #options: date2 (within roster); date4 (within roster.update)
 ALL.BY  <- T             #change to F if you want to plot recidivism rate over two years TOTAL (T if you want to stratify by year)
 
 #colors
@@ -545,7 +545,7 @@ print(adv_rate)
 
 ```
 
-Oh no!! An advocacy group just publicly published that EBBR programs' recidivism rates are at an all time high of `r adv_rate`% with a report that claims to have used **your** DOC's reported data on EBBR program recidivism rates! Find out what's going on, and fast!
+Oh no!! The Center Wing Coaltion advocacy group just published [a report](cwc_report.html) that EBBR programs' recidivism rates are at an all time high of `r adv_rate`% with a report that claims to have used **your** DOC's reported data on EBBR program recidivism rates! Find out what's going on, and fast!
 
 ```{r unweighted}
 #manage the data to produce recidivism rates

@@ -1,3 +1,9 @@
+---
+format:
+  html:
+    toc-depth: 2
+---
+
 # Welcome
 
 As part of an ongoing staffing crisis, you have been asked by your director to reproduce a report that was produced under the last research director, who is now on a beach, enjoying her retirement, and unreachable. You asked your only analyst to try to reproduce the report, but they have not yet been able to, and there doesn’t seem to be any record of how the numbers were produced. The report establishes recidivism rates for several key programs and provides staffing levels for those programs. Your director wants to make the case that the DOC needs staff to implement successful programs. This is in response to a group of hostile legislators (a mix of far-right fiscal conservatives who do not believe in prison programs and far-left “de-funders” who think your budget is too big). They are running a bill to reduce your overall budget and eliminate some existing staff vacancies, with the argument that if you have survived for the past two years with your current staffing levels, you must be doing okay.
