@@ -545,7 +545,7 @@ print(adv_rate)
 
 ```
 
-Oh no!! An advocacy group just publicly published that EBBR programs' recidivism rates are at an all time high of `r adv_rate`% with a report that claims to have used **your** DOC's reported data on EBBR program recidivism rates! Find out what's going on, and fast!
+Oh no!! The Center Wing Coaltion advocacy group just published [a report](cwc_report.html) that EBBR programs' recidivism rates are at an all time high of `r adv_rate`% with a report that claims to have used **your** DOC's reported data on EBBR program recidivism rates! Find out what's going on, and fast!
 
 ```{r unweighted}
 #manage the data to produce recidivism rates

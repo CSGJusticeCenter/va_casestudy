@@ -6,6 +6,7 @@ book:
   chapters:
     - index.qmd
     - va_cs.qmd
+    - cwc_report.qmd
   sidebar: 
     logo: img/Virtual Academy_RGB.png
   site-url: https://csg-va-casestudy.netlify.app/
