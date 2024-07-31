@@ -41,6 +41,5 @@ format:
     toc-title: "On this page"
     link-external-icon: true
     link-external-newwindow: true
-    code-fold: show
     code-overflow: wrap
     title-prefix: "ADC Virtual Academy"

@@ -4,7 +4,7 @@ title: "GDOC Recidivism Analysis"
 
 ## Introduction
 
-Our DOC captures 10 Evidence Based Recidivism Reduction (EBRR) programs in 2021 listed by the Federal Bureau of Prisons and the individuals involved:
+Our DOC captures 10 Evidence Based Recidivism Reduction (EBRR) programs in 2017 listed by the Federal Bureau of Prisons and the individuals involved:
 
 * Anger Management
 * The Bureau Rehabilitation and Values Enhancement Program
@@ -43,21 +43,34 @@ library(ggrepel)
 #https://www.bop.gov/inmates/fsa/docs/fsa_program_guide_2107.pdf
 #https://www.bop.gov/inmates/fsa/docs/evidence_based_recidivism_reduction_programs.pdf
 
-prgnm = c("am,0","am,0","am,1",
-          "brave,0","brave,0","brave,1",
-          "bcs,0","bcs,0","bcs,1",
-          "resolve,0","resolve,0","resolve,1",
-          "rdap,0","rdap,0","rdap,1",
-          "dbt,0","dbt,0","dbt,1",
-          "sotrt,0","sotrt,0","sotrt,1",
-          "challenge,0","challenge,1",
-          "mhsd,0","mhsd,1",
-          "stages,0","stages,1",
+#for participants
+prgnm = c("am,0",        "am,0",        "am,0",        "am,0",        "am,0",                      "am,1",        "am,1",        "am,1",        #CWC
+          
+          "brave,0",     "brave,0",     "brave,0",     "brave,0",                                  "brave,0",     "brave,1",                         #spelling error below
+          
+          "bcs,0",       "bcs,0",       "bcs,1",                                                   "bcs,1",                                          #spelling error below
+          
+          "resolve,0",   "resolve,0",   "resolve,1",                                               "resolve,1",
+          
+          "rdap,1",                                                                                "rdap,1",      "rdap,1",                     #CWC #spelling error below 
+          
+                                                                                                   "dbt,1",       "dbt,1",                      #CWC #spelling error below
+          
+          "sotrt,0",     "sotrt,1",                                                                "sotrt,1",
+          
+          "challenge,0", "challenge,0", "challenge,0", "challenge,0", "challenge,0",               "challenge,0", "challenge,1", "challenge,1", #CWC
+          
+          "mhsd,0",      "mhsd,0",                                                                 "mhsd,1",
+          
+          "stages,0",    "stages,0",    "stages,0",    "stages,0",    "stages,0",    "stages,0",   "stages,1",    "stages,1",    "stages,1",    #CWC
+          
           #spelling errors
-          "bgs,0",
-          "fbt,0",
-          "brv,0",
-          "rdp,0")
+          "bgs,0", "bgs,0",
+          "fbt,0", "fbt,0",
+          "brv,0", "brv,0",
+          "rdp,0", "rdp,0")
+
+#for staff
 prgnm2 = c("am",
           "brave",
           "bcs",
@@ -74,9 +87,9 @@ prgnm2 = c("am",
           "resol")
 
 #dataframe sizes: sizen - roster, sizen2 - program staff, sizen3 - 2nd roster
-sizen  = 50
-date1  = 2021
-date2  = 2022
+sizen  = 50 #DO NOT CHANGE - THIS IS SIZE OF DATA BEING SAMPLED ABOVE
+date1  = 2017
+date2  = 2018
 
 ##staff
 sizen2 = 80
@@ -92,16 +105,17 @@ roster.prep <- data.frame(
   #create age
   age          = round(rnorm(sizen,29,5)),
   #create programs/returns to prison
-  programs.temp= sample(prgnm, size=sizen, replace = TRUE),
+  #data being sampled is exactly 50
+  programs.temp= sample(prgnm, size=sizen, replace = FALSE),
   #create dates in programs
-  datestart    = as.Date("2022-01-01") + round(rnorm(sizen, mean = 0, sd = 120))
+  datestart    = as.Date("2018-01-01") + round(rnorm(sizen, mean = 0, sd = 120))
   ) |>
   #split programs/returns
   mutate(programs  = substr(programs.temp,1,nchar(programs.temp)-2),
          ret       = as.numeric(substr(programs.temp,nchar(programs.temp),nchar(programs.temp))),
          #put in a random date to throw things off
-         datestart = case_when(row_number() == sizen-3  ~ as.Date(paste0('2001/06/05')), 
-                               row_number() == sizen-20 ~ as.Date(paste0('1991/08/22')),
+         datestart = case_when(row_number() == sizen-3  ~ as.Date(paste0('2007/06/05')), 
+                               row_number() == sizen-20 ~ as.Date(paste0('1997/08/22')),
                             TRUE ~ datestart),
          #put in a random return values
          ret       = case_when(row_number() == sizen-10  ~ -1, 
@@ -121,15 +135,15 @@ roster <- roster.prep |>
 ###############################################################
 #create 1000 person dataframe
 sizen3 = 1000
-date3  = 2023
-date4  = 2024
+date3  = 2021
+date4  = 2022
 
 set.seed(20012)
 roster.update <- data.frame(
   client_names    = ch_name(sizen3),
   age             = round(rnorm(sizen3,29,5)),
   programs.temp   = sample(prgnm, size=sizen3, replace = TRUE),
-  datestart       = as.Date("2024-01-01") + round(rnorm(sizen, mean = 0, sd = 120))
+  datestart       = as.Date("2022-01-01") + round(rnorm(sizen, mean = 0, sd = 120))
   ) |>
   mutate(programs = substr(programs.temp,1,nchar(programs.temp)-2),
          ret  = as.numeric(substr(programs.temp,nchar(programs.temp),nchar(programs.temp)))
@@ -167,7 +181,7 @@ write.csv(staff,"staff.csv", row.names = FALSE)
 roster  <- roster        #options: roster; roster.update
 date1   <- date1         #options: date1 (within roster); date3 (within roster.update)
 date2   <- date2         #options: date2 (within roster); date4 (within roster.update)
-ALL.BY  <- T             #change to F if you want to plot recidivism rate over two years TOTAL (T if you want to stratify by year)
+ALL.BY  <- F             #change to F if you want to plot recidivism rate over two years TOTAL (T if you want to stratify by year)
 
 #colors
 date1c  <- "deepskyblue1"
@@ -283,8 +297,8 @@ roster.clean <- roster.nodup |>
                                     programs == "rdp" ~ "rdap",
                                     TRUE ~ programs),
          
-         #dates - assume that wrong dates occurred in 2021
-         datestart      = case_when(year(datestart) < 2021 ~ `year<-`(datestart, 2021),
+         #dates - assume that wrong dates occurred in 2017
+         datestart      = case_when(year(datestart) < 2017 ~ `year<-`(datestart, 2017),
                                     TRUE ~ datestart),
          
          #returns - assume that wrong returns should all be =1
@@ -575,7 +589,7 @@ print(paste0(unw.d2*100,"%"))
 
 ```
 
-Well a recidivism rate of `r unw.a*100`% is much better, but it still doesn't match what the advocacy group is reporting! Keep investigating! 
+Hm - something still doesn't line up. Keep investigating! 
 
 ```{r}
 #| ref-label: 'remove'
@@ -739,7 +753,7 @@ gg_dot <- tabout.dates |>
             col = "white") +
 
   # add a label above the first two points
-  geom_text(aes(x = x, y = y, label = label, col = label),
+  geom_text_repel(aes(x = x, y = y, label = label, col = label), force_pull = 50,
             data.frame(x     = plotit, 
                        y     = length(tabout.dates$programs_clean) + 1, 
                        label = titledates2), size = 6) +
@@ -795,7 +809,7 @@ ggplot(tabout, aes(x=programs_clean, y=recid_rate_all)) +
   geom_segment(aes(x=programs_clean, xend=programs_clean, y=w.a, yend=recid_rate_all), color=date1c) +
   geom_point(color=staffc, size=4, alpha=0.6) +
   geom_hline(yintercept=w.a, linetype = "dashed", color = hlinew1, size = 1) +
-  geom_label(aes(label=paste0("Weighted avg: ",w.a), x=w.a, vjust = -10, hjust = 1.5), fill=hlinew1,
+  geom_label(aes(label=paste0("Weighted avg: ",w.a), x=w.a, vjust = -9, hjust = 0.75), fill=hlinew1,
                   data = tabout |>
                filter(programs_clean == last & year == date2)) +
   theme_light() +
