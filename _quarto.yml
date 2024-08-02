@@ -22,8 +22,9 @@ filters:
   - webr
   
 webr:
+  show-startup-message: false    # Disable displaying status of webR initialization
   cell-options:
-    autorun: true
+    autorun: true                # automatically run webr chunks before user interacts with them
 
 knitr:
   opts_chunk: 
