@@ -510,6 +510,9 @@ tabout |>
 )
 )
 )
+
+#for positioning in plotting
+last <- tail(tabout$programs_clean,n=1)
 ```
 
 <br />
@@ -697,13 +700,19 @@ w.d2 <- round(sum(tabout2.wgt$recid_rate_year_w,na.rm=TRUE)/total.d2,2)
 
 Now let's report it through some fancy data visualization work.
 
+```{webr-r}
+#| autorun: false
+ALL.BY  <-                     #F=overall years; T=by year
+
+#colors
+date1c  <- "deepskyblue1"      #set color for the earlier data date
+date2c  <- "darkolivegreen3"   #set color for the later data date
+```
+
 ```{r dataviz2, warning=FALSE}
 #which weights to plot
 w   <- if(ALL.BY) c(w.d1,w.d2) else w.a
 unw <- if(ALL.BY) c(unw.d1,unw.d2) else unw.a
-
-#for positioning
-last <- tail(tabout$programs_clean,n=1)
 
 #add recidivism weight averages to plot
 rrfinal<- rr + geom_hline(yintercept=w[1], linetype = "dashed", color = hlinew1, size = 1) +
@@ -737,8 +746,8 @@ rrfinal<- rr + geom_hline(yintercept=w[1], linetype = "dashed", color = hlinew1,
 rrfinal
 ```
 
-```{r dataviz9, echo=FALSE}
-suppressMessages(download_this(rrfinal, button_label = "Download Plot", class = "button_large"))
+```{r dataviz2print, echo=FALSE}
+suppressMessages(download_this(rrfinal, button_label = "Download Plot", class = "button_large", output_name = paste0("recidivism_rate_",date1,"_to_",date2)))
 ```
 
 ## More Cool Data Viz!
@@ -834,7 +843,7 @@ gg_dot +
 
 <br />
 
-Now that we have our data in the right format, what are some more engaging ways we can plot recidivism rates for leadership and our stakeholders overall for these programs?
+Now that we have our data in the right format, shown in our sample of the data above, what are some more engaging ways we can plot recidivism rates for leadership and our stakeholders overall for these programs?
 
 ### Plotting Overall
 

@@ -17,6 +17,14 @@ book:
       ![](img/Virtual Academy_White.svg){fig-alt='Virtual Academy' width=354px}<br><br>
       This project was supported by Grant No. 15PBJA-22-GK-01570-JRIX awarded by the Bureau of Justice Assistance. The Bureau of Justice Assistance is a component of the Department of Justice’s Office of Justice Programs, which also includes the Bureau of Justice Statistics, the National Institute of Justice, the Office of Juvenile Justice and Delinquency Prevention, the Office for Victims of Crime, and the SMART Office. Points of view or opinions in this document are those of the author and do not necessarily represent the official position or policies of the U.S. Department of Justice.
 
+engine: knitr
+filters:
+  - webr
+  
+webr:
+  cell-options:
+    autorun: true
+
 knitr:
   opts_chunk: 
     results: "hold"
