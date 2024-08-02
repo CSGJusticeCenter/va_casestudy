@@ -19,11 +19,12 @@ book:
 
 knitr:
   opts_chunk: 
-    collapse: true
-    comment: "#>"
+    results: "hold"
+
 
 format:
   html:
+    css: styles.css
     df-print: paged
     theme:
       - zephyr
@@ -43,3 +44,5 @@ format:
     link-external-newwindow: true
     code-overflow: wrap
     title-prefix: "ADC Virtual Academy"
+    code-fold: true
+    code-summary: "Reveal R code"
