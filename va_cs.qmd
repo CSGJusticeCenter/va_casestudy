@@ -106,7 +106,8 @@ date1  = 2017
 date2  = 2018
 
 ##staff
-sizen2 = 80
+sizen2 = 80 #2017-2018 staff
+sizen4 = 84 #2021-2022 staff
 
 ############################################
 #####set up roster/recidivism dataframe#####
@@ -164,12 +165,6 @@ roster.update <- data.frame(
          ) |>
   select(-c(programs.temp))
 
-###############################################################
-#####COMBINE DATA SETS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#####
-###############################################################
-
-
-
 ########################################
 #####set up program staff dataframe#####
 ########################################
@@ -177,7 +172,12 @@ roster.update <- data.frame(
 set.seed(160)
 staff <- data.frame(
   staff = ch_name(sizen2,messy=TRUE),
-  prg     = sample(prgnm2, size=sizen2, replace = TRUE)
+  prg   = sample(prgnm2, size=sizen2, replace = TRUE)
+  )
+set.seed(160)
+staff.update <- data.frame(
+  staff = ch_name(sizen4,messy=TRUE),
+  prg   = sample(prgnm2, size=sizen4, replace = TRUE)
   )
 
 ###################################
@@ -186,16 +186,15 @@ staff <- data.frame(
 write.csv(roster,"roster.csv", row.names = FALSE)
 write.csv(roster.update,"rosterupdate.csv", row.names = FALSE)
 write.csv(staff,"staff.csv", row.names = FALSE)
+write.csv(staff.update,"staffupdate.csv", row.names = FALSE)
 
 ```
 
 ```{r toggle, echo=FALSE}
 #ANALYSIS TOGGLE
 ######################################
-roster  <- roster        #options: roster; roster.update
-date1   <- date1         #options: date1 (within roster); date3 (within roster.update)
-date2   <- date2         #options: date2 (within roster); date4 (within roster.update)
-ALL.BY  <- F             #change to F if you want to plot recidivism rate over two years TOTAL (T if you want to stratify by year)
+valset  <- 1 #set valset to 0 for first iteration; 1 for updated data iteration
+ALL.BY  <- T #change to F if you want to plot recidivism rate over two years TOTAL (T if you want to stratify by year)
 
 #colors
 date1c  <- "deepskyblue1"
@@ -204,6 +203,11 @@ staffc  <- "brown"
 hlinew1 <- "orange"
 hlinew2 <- "darkgrey"
 
+######################################
+roster  <- if(valset==0) {roster} else {roster.update} #options: roster; roster.update
+date1   <- if(valset==0) {date1}  else {date3}         #options: date1 (within roster); date3 (within roster.update)
+date2   <- if(valset==0) {date2}  else {date4}         #options: date2 (within roster); date4 (within roster.update)
+staff   <- if(valset==0) {staff}  else {staff.update}  #options: staff; staff.update
 ######################################
 ```
 
