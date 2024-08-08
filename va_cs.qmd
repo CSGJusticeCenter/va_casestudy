@@ -23,10 +23,7 @@ Your DOC Research Department tracks clients served and staff involved in running
 #packages
 #install.packages("charlatan")
 #install.packages("tidyverse")
-#install.packages("tidyr")
-#install.packages("dplyr")
 #install.packages("knitr")
-#install.packages("ggplot2")
 #install.packages("ggrepel)
 #install.packages("summarytools")
 #install.packages("kableExtra")
@@ -40,10 +37,7 @@ Your DOC Research Department tracks clients served and staff involved in running
 library(charlatan)
 library(lubridate)
 library(tidyverse)
-library(tidyr)
-library(dplyr)
 library(knitr)
-library(ggplot2)
 library(ggrepel)
 library(summarytools)
 library(kableExtra)
@@ -193,8 +187,8 @@ write.csv(staff.update,"staffupdate.csv", row.names = FALSE)
 ```{r toggle, echo=FALSE}
 #ANALYSIS TOGGLE
 ######################################
-valset  <- 1 #set valset to 0 for first iteration; 1 for updated data iteration
-ALL.BY  <- T #change to F if you want to plot recidivism rate over two years TOTAL (T if you want to stratify by year)
+valset  <- 0 #set valset to 0 for first iteration; 1 for updated data iteration
+ALL.BY  <- F #change to F if you want to plot recidivism rate over two years TOTAL (T if you want to stratify by year)
 
 #colors
 date1c  <- "deepskyblue1"
@@ -603,7 +597,10 @@ rr <- ggplot(tabout |>
 
 #display
 rr
+```
 
+```{r dataviz1print, echo=FALSE}
+suppressMessages(download_this(rr, button_label = "Download Plot", class = "button_large", output_name = paste0("recidivism_rate_",date1,"_to_",date2)))
 ```
 
 ### CWC Damned Lies and Statistics
@@ -704,61 +701,23 @@ w.d2 <- round(sum(tabout2.wgt$recid_rate_year_w,na.rm=TRUE)/total.d2,2)
 
 Now let's report it through some fancy data visualization work.
 
-```{webr-r}
-#| autorun: false
-ALL.BY  <-                     #F=overall years; T=by year
+::: {.callout-note}
+Change the highlighted code below (`ALL.BY`, `CWC`, and plot colors) to update your output.
+:::
 
-#colors
-date1c  <- "deepskyblue1"      #set color for the earlier data date
-date2c  <- "darkolivegreen3"   #set color for the later data date
-```
+{{< include va_cs_webr.qmd >}}
 
-```{r dataviz2, warning=FALSE}
-#which weights to plot
-w   <- if(ALL.BY) c(w.d1,w.d2) else w.a
-unw <- if(ALL.BY) c(unw.d1,unw.d2) else unw.a
+::: {.callout-tip}
+## Download your plot!
 
-#add recidivism weight averages to plot
-rrfinal<- rr + geom_hline(yintercept=w[1], linetype = "dashed", color = hlinew1, size = 1) +
-  {if(ALL.BY) geom_hline(yintercept=w[2], linetype = "dashed", color = hlinew1, size = 1)}+
-  geom_hline(yintercept=unw[1], linetype = "dashed", color = hlinew2, size = 1) +
-  {if(ALL.BY) geom_hline(yintercept=unw[2], linetype = "dashed", color = hlinew2, size = 1)}+
-  geom_label_repel(aes(label=lab, y=0.25), fill=hlinew1,
-             data = tabout |>
-               filter(if(ALL.BY) year %in% dates else year == date2) |>
-               mutate(recid_rate = case_when( ALL.BY  ~ recid_rate_year,
-                                             !ALL.BY ~ recid_rate_all),
-                      lab        = case_when( ALL.BY &  date1 != date2 ~ paste0(date1," Weighted avg: ",w[1],"\n",date2," Weighted avg: ",w[2]),
-                                             !ALL.BY &  date1 != date2 ~ paste0(date1,"-",date2,"\nWeighted avg: ",w[1]),
-                                              ALL.BY &  date1 == date2 ~ paste0(date1,"\nWeighted avg: ",w[1]))) |>
-               filter(programs_clean == last & year == date2),
-             nudge_x = -4,
-             min.segment.length = Inf) + 
-  geom_label_repel(aes(label=lab, y=0.5), fill=hlinew2,
-             data = tabout |>
-               filter(if(ALL.BY) year %in% dates else year == date2) |>
-               mutate(recid_rate = case_when( ALL.BY  ~ recid_rate_year,
-                                             !ALL.BY ~ recid_rate_all),
-                      lab        = case_when( ALL.BY &  date1 != date2 ~ paste0(date1," Unweighted avg: ",unw[1],"\n",date2," Unweighted avg: ",unw[2]),
-                                             !ALL.BY &  date1 != date2 ~ paste0(date1,"-",date2,"\nUnweighted avg: ",unw[1]),
-                                              ALL.BY &  date1 == date2 ~ paste0(date1,"\nUnweighted avg: ",unw[1]))) |>
-               filter(programs_clean == last & year == date2),
-             nudge_x = -8,
-             min.segment.length = Inf
-  ) 
-
-rrfinal
-```
-
-```{r dataviz2print, echo=FALSE}
-suppressMessages(download_this(rrfinal, button_label = "Download Plot", class = "button_large", output_name = paste0("recidivism_rate_",date1,"_to_",date2)))
-```
+A `Download Image` button will appear when you scroll your mouse cursor over the plot.
+:::
 
 ## More Cool Data Viz!
 
-Let's prepare our data to do some really fun data viz! First let's combine everything together in a way that allows us to produce visualizations by year or overall.
+Let's prepare our data to do some really fun data viz! What are some other engaging ways we could plot recidivism rates for leadership and our stakeholders pooled overall for these programs?
 
-```{r dataviz3}
+```{r dataviz4, echo=FALSE, warning=FALSE, message=FALSE, include=FALSE}
 #this code will run if plotting data for multiple years, otherwise nothing will be produced (i.e., ALL.BY <- T)
 
 #manipulate data for plotting
@@ -773,11 +732,6 @@ tabout.date2 <- tabout |>
 tabout.dates <- inner_join(tabout.date1, tabout.date2, by = "programs_clean") |>
   select(programs_clean, recid_rate_date1, recid_rate_date2, recid_rate_all)
 
-head(tabout.dates)
-
-```
-
-```{r dataviz4, echo=FALSE, warning=FALSE, message=FALSE, include=FALSE}
 #make some really cool horizontal floating dot charts!
 #overwrite value of rates to overall if ALL.BY
 {if(!ALL.BY) tabout.dates$recid_rate_date1 <- tabout.dates$recid_rate_all}
@@ -826,7 +780,7 @@ gg_dot <- tabout.dates |>
   # add a label above the first two points
   geom_text_repel(aes(x = x, y = y, label = label, col = label), force_pull = 50,
             data.frame(x     = plotit, 
-                       y     = length(tabout.dates$programs_clean) + 1, 
+                       y     = length(tabout.dates$programs_clean) + 2, 
                        label = titledates2), size = 6) +
   scale_color_manual(values = c(date1c, date2c), guide = "none") +
   
@@ -845,13 +799,13 @@ gg_dot +
 
 ```
 
-<br />
-
-Now that we have our data in the right format, shown in our sample of the data above, what are some more engaging ways we can plot recidivism rates for leadership and our stakeholders overall for these programs?
-
 ### Plotting Overall
 
-```{r dataviz5, eval=!ALL.BY}
+```{r, include=FALSE}
+ALL.BY <- F
+```
+
+```{r dataviz5, warning=FALSE}
 #| ref-label: 'dataviz4'
 ```
 
@@ -903,11 +857,15 @@ ggplot(tabout, aes(x=programs_clean, y=recid_rate_all)) +
 
 What about displaying these rates by year?
 
-```{r dataviz7, eval=ALL.BY}
+```{r, include=FALSE}
+ALL.BY <- T
+```
+
+```{r dataviz7, warning=FALSE}
 #| ref-label: 'dataviz4'
 ```
 
-```{r dataviz8, warning=FALSE, message=FALSE, eval=ALL.BY}
+```{r dataviz8, warning=FALSE, message=FALSE}
 #plot!
 gg_line <- tabout.dates |>
   # add a variable for when rates are higher in date1 than in date2 (for colours)
@@ -991,9 +949,7 @@ gg_line +
 
 ## Final Report
 
-This exploratory document has been really useful! But what if we want to get all of this into a single report for your Director in a format they can actually digest?
-
-
+This exploratory document has been really useful for our internal purposes! But what if we want to get all of the pertinent info into a single report for your Director in a format they can actually digest? Something similar to the original report!
 
 ## R Session
 

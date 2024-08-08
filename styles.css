@@ -22,3 +22,7 @@
     outline: none;
     text-overflow: ellipsis;
 }
+
+pre, code, .sourceCode {
+  font-size: 0.95em;
+}
