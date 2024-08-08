@@ -216,7 +216,20 @@ tabout <- inner_join(roster2, staff2, by = ("programs_clean")) |>
   ) |>
   #correct missing values for recid_rate_all since this is the overall recidivism rate across multiple years
   group_by(programs_clean) |>
-  fill(recid_rate_all, .direction = "updown")
+  fill(recid_rate_all, .direction = "updown") |>
+  ungroup() |>
+  #create final program names for table
+  mutate(program_official = case_when(programs_clean == "am"        ~ "Anger Management",
+                                      programs_clean == "bcs"       ~ "Basic Cognitive Skills",
+                                      programs_clean == "brave"     ~ "The Bureau Rehabilitation and Values Enhancement Program",
+                                      programs_clean == "challenge" ~ "Challenge Program",
+                                      programs_clean == "dbt"       ~ "Dialectical Behavior Therapy",
+                                      programs_clean == "mhsd"      ~ "Mental Health Step Down Program",
+                                      programs_clean == "rdap"      ~ "Residential Drug Abuse Program",
+                                      programs_clean == "resolve"   ~ "The Resolve Program",
+                                      programs_clean == "sotrt"     ~ "Sex Offender Treatment Program",
+                                      programs_clean == "stages"    ~ "Steps Toward Awareness, Growth, and Emotional Strength Program",
+                                      TRUE ~ programs_clean))
 
 #for positioning in plotting
 last <- tail(tabout$programs_clean,n=1)
@@ -280,7 +293,7 @@ w.d2 <- round(sum(tabout2.wgt$recid_rate_year_w,na.rm=TRUE)/total.d2,2)
 #in the block below, change the values to update the plot as needed
 ###############################
 ALL.BY  <- F #F overall years; T by year)
-CWC     <- T #T remove 5 programs; F keep 10 programs
+CWC     <- F #T remove 5 programs; F keep 10 programs
 
 #plot colors
 staffc  <- "brown"             #set color for staffing text
@@ -304,14 +317,14 @@ titledates <- ifelse(length(dates)>=2 & date1 != date2, paste0(date1," - ",date2
 #which years/programs are missing data? (footer)
 prg.NA <- tabout.cwc |> 
   filter(is.na(recid_rate_year)) |>
-  pull(programs_clean)
+  pull(program_official)
 
 ##plot it! this will plot recidivism rates with overlaid staffing text
 rr <- ggplot(tabout.cwc |> 
                filter(if(ALL.BY) year %in% dates else year == date2) |>
                mutate(recid_rate = case_when(ALL.BY  ~ recid_rate_year,
                                              !ALL.BY ~ recid_rate_all))
-             ,aes(x=programs_clean, y=recid_rate, fill=year)) +
+             ,aes(x=str_wrap(program_official, 32), y=recid_rate, fill=year)) +
   geom_bar(position = "dodge",stat = "identity") +
   geom_text(aes(label=ifelse(year==dates[2],paste(num_staff,"staff"),"")), vjust=-0.3, color = staffc) +
   scale_fill_manual(values=c(date1c,date2c)) +
@@ -320,6 +333,7 @@ rr <- ggplot(tabout.cwc |>
   xlab("EBBR Programs") +
   ggtitle(paste0("Recidivism Rates across EBBR programs\n",titledates)) +
   theme_classic() +
+  theme(axis.text.x = element_text(angle = 30, vjust = 1, hjust=1)) +
   #remove legend if plotting overall (not by year)
   {if(!ALL.BY) theme(legend.position="none")}+
   #only print caption if a program is missing data

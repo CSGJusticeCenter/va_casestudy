@@ -486,22 +486,30 @@ tabout <- inner_join(roster2, staff2, by = ("programs_clean")) |>
   ) |>
   #correct missing values for recid_rate_all since this is the overall recidivism rate across multiple years
   group_by(programs_clean) |>
-  fill(recid_rate_all, .direction = "updown")
+  fill(recid_rate_all, .direction = "updown") |>
+  ungroup() |>
+  #create final program names for table
+  mutate(program_official = case_when(programs_clean == "am"        ~ "Anger Management",
+                                      programs_clean == "bcs"       ~ "Basic Cognitive Skills",
+                                      programs_clean == "brave"     ~ "The Bureau Rehabilitation and Values Enhancement Program",
+                                      programs_clean == "challenge" ~ "Challenge Program",
+                                      programs_clean == "dbt"       ~ "Dialectical Behavior Therapy",
+                                      programs_clean == "mhsd"      ~ "Mental Health Step Down Program",
+                                      programs_clean == "rdap"      ~ "Residential Drug Abuse Program",
+                                      programs_clean == "resolve"   ~ "The Resolve Program",
+                                      programs_clean == "sotrt"     ~ "Sex Offender Treatment Program",
+                                      programs_clean == "stages"    ~ "Steps Toward Awareness, Growth, and Emotional Strength Program",
+                                      TRUE ~ programs_clean))
 #verify join was successful
 joincheck <- anti_join(roster2, staff2, by = ("programs_clean"))
 
 
 #print out overall rates and staff
 tabout |> 
-  select(-c(year, recid_rate_year)) |> 
-  datatable(extensions = 'Buttons', rownames=FALSE, colnames=c('Program', 'Number of Staff', 'Overall Recidivism Rate'), 
+  select(c(program_official, recid_rate_all, num_staff)) |> 
+  datatable(extensions = 'Buttons', rownames=FALSE, colnames=c('Program', 'Recidivism Rate', 'Staffing'), 
                           options=list(pageLength=10, dom='Bt',
   buttons = list(
-          list(extend = "csv", text = "Download Table View", filename = "view_overall",
-               exportOptions = list(
-                 modifier = list(page = "current")
-               )
-          ),
           list(extend = "csv", text = "Download Data", filename = "data",
                exportOptions = list(
                  modifier = list(page = "all")))
@@ -515,13 +523,19 @@ last <- tail(tabout$programs_clean,n=1)
 
 <br />
 
+::: {.callout-important}
+## Important
+
+Save this for the final report!
+:::
+
 ```{r merge2}
 #CROSSTALK by year rates and staff
 tabout2 <- SharedData$new(tabout |> 
-  select(-c(recid_rate_all)))
+  select(c(year, program_official, recid_rate_year, num_staff)))
 
 filter_checkbox("year", "Select Year", tabout2, ~year, inline=FALSE)
-datatable(tabout2, extensions = 'Buttons', rownames=FALSE, colnames=c('Year', 'Program', 'Number of Staff', 'Recidivism Rate'), 
+datatable(tabout2, extensions = 'Buttons', rownames=FALSE, colnames=c('Year', 'Program', 'Recidivism Rate', 'Staffing'), 
                           options=list(pageLength=10, dom='Btip',
  buttons = list(
           list(extend = "csv", text = "Download Table View", filename = "view_year",
@@ -535,10 +549,6 @@ datatable(tabout2, extensions = 'Buttons', rownames=FALSE, colnames=c('Year', 'P
 )
 )
 )
-
-
-
-
 ```
 
 <br />
@@ -602,6 +612,12 @@ rr
 ```{r dataviz1print, echo=FALSE}
 suppressMessages(download_this(rr, button_label = "Download Plot", class = "button_large", output_name = paste0("recidivism_rate_",date1,"_to_",date2)))
 ```
+
+::: {.callout-important}
+## Important
+
+Save this for the final report!
+:::
 
 ### CWC Damned Lies and Statistics
 
@@ -949,7 +965,7 @@ gg_line +
 
 ## Final Report
 
-This exploratory document has been really useful for our internal purposes! But what if we want to get all of the pertinent info into a single report for your Director in a format they can actually digest? Something similar to the original report!
+This exploratory document has been really useful for our internal purposes! But what if we want to get all of the pertinent info into a single report for your Director in a format they can actually digest; Something similar to the original report?
 
 ## R Session
 

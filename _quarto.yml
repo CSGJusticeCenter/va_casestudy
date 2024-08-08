@@ -25,7 +25,7 @@ webr:
     context: setup
     warning: false
     editor-font-scale: 0.75
-  packages: ['charlatan', 'lubridate', 'tidyverse', 'knitr', 'ggrepel']
+  packages: ['charlatan', 'lubridate', 'tidyverse', 'knitr', 'ggrepel','stringr']
 
 filters:
   - webr
