@@ -26,12 +26,14 @@ Your DOC Research Department tracks clients served and staff involved in running
 #install.packages("knitr")
 #install.packages("ggrepel)
 #install.packages("summarytools")
-#install.packages("kableExtra")
 #install.packages("DT")
 #install.packages("devtools")
 #devtools::install_github("kent37/summarywidget")
 #devtools::install_github("rstudio/crosstalk")
 #install.packages("downloadthis")
+#install.packages("quarto")
+#install.packages("rmarkdown")
+#install.packages("officer")
 
 #activate!!
 library(charlatan)
@@ -40,139 +42,17 @@ library(tidyverse)
 library(knitr)
 library(ggrepel)
 library(summarytools)
-library(kableExtra)
 library(DT)
 library(devtools)
 library(summarywidget)
 library(crosstalk)
 library(downloadthis)
+library(quarto)
+library(rmarkdown)
+library(officer)
 
-#programs
-#https://www.bop.gov/inmates/fsa/docs/fsa_program_guide_2107.pdf
-#https://www.bop.gov/inmates/fsa/docs/evidence_based_recidivism_reduction_programs.pdf
-
-#for participants
-prgnm = c("am,0",        "am,0",        "am,0",        "am,0",        "am,0",                      "am,1",        "am,1",        "am,1",        #CWC
-          
-          "brave,0",     "brave,0",     "brave,0",     "brave,0",     "brave,0",                   "brave,1",                                        #spelling error below
-          
-          "bcs,0",       "bcs,0",                                                                  "bcs,1",       "bcs,1",                           #spelling error below
-          
-          "resolve,0",   "resolve,0",                                                              "resolve,1",   "resolve,1",
-          
-                                                                                                   "rdap,1",      "rdap,1",      "rdap,1",      #CWC #spelling error below 
-          
-                                                                                                   "dbt,1",       "dbt,1",                      #CWC #spelling error below
-          
-          "sotrt,0",                                                                               "sotrt,1",     "sotrt,1",
-          
-          "challenge,0", "challenge,0", "challenge,0", "challenge,0", "challenge,0", "challenge,0","challenge,1", "challenge,1",                #CWC
-          
-          "mhsd,0",      "mhsd,0",                                                                 "mhsd,1",
-          
-          "stages,0",    "stages,0",    "stages,0",    "stages,0",    "stages,0",    "stages,0",   "stages,1",    "stages,1",    "stages,1",    #CWC
-          
-          #spelling errors
-          "bgs,0", "bgs,0",
-          "fbt,0", "fbt,0",
-          "brv,0", "brv,0",
-          "rdp,0", "rdp,0")
-
-#for staff
-prgnm2 = c("am",
-          "brave",
-          "bcs",
-          "resolve",
-          "rdap",
-          "dbt",
-          "sotrt",
-          "challenge",
-          "mhsd",
-          "stages",
-          #spelling errors
-          "brv",
-          "stg",
-          "resol")
-
-#dataframe sizes: sizen - roster, sizen2 - program staff, sizen3 - 2nd roster
-sizen  = 50 #DO NOT CHANGE - THIS IS SIZE OF DATA BEING SAMPLED ABOVE
-date1  = 2017
-date2  = 2018
-
-##staff
-sizen2 = 80 #2017-2018 staff
-sizen4 = 84 #2021-2022 staff
-
-############################################
-#####set up roster/recidivism dataframe#####
-############################################
-#create person-level dataframe
-set.seed(80)
-roster.prep <- data.frame(
-  #create names
-  client_names  = ch_name(sizen),
-  #create age
-  age           = round(rnorm(sizen,29,5)),
-  #create programs/returns to prison
-  #data being sampled is exactly 50
-  programs.temp = sample(prgnm, size=50, replace = FALSE),
-  #create dates in programs
-  dt            = as.Date("2018-01-01") + round(rnorm(sizen, mean = 0, sd = 120))
-  ) |>
-  #split programs/returns
-  mutate(programs  = substr(programs.temp,1,nchar(programs.temp)-2),
-         ret       = as.numeric(substr(programs.temp,nchar(programs.temp),nchar(programs.temp))),
-         #put in a random date to throw things off
-         dt        = case_when(row_number() == sizen-3  ~ as.Date(paste0('2007/06/05')), 
-                               row_number() == sizen-20 ~ as.Date(paste0('1997/08/22')),
-                            TRUE ~ dt),
-         #put in a random return values
-         ret       = case_when(row_number() == sizen-10  ~ -1, 
-                               row_number() == sizen-30  ~ 11,
-                               row_number() == sizen-17  ~ 2,
-                            TRUE ~ ret)
-         ) |>
-  select(-c(programs.temp)) 
-
-#create duplicates
-roster <- roster.prep |> 
-  filter(row_number() %in% c(1:5)) |> 
-  bind_rows(roster.prep)
-
-###############################################################
-#####set up roster/recidivism dataframe for updated roster#####
-###############################################################
-#create 1000 person dataframe
-sizen3 = 1000
-date3  = 2021
-date4  = 2022
-
-set.seed(20012)
-roster.update <- data.frame(
-  client_names    = ch_name(sizen3),
-  age             = round(rnorm(sizen3,29,5)),
-  programs.temp   = sample(prgnm, size=sizen3, replace = TRUE),
-  dt       = as.Date("2022-01-01") + round(rnorm(sizen, mean = 0, sd = 120))
-  ) |>
-  mutate(programs = substr(programs.temp,1,nchar(programs.temp)-2),
-         ret  = as.numeric(substr(programs.temp,nchar(programs.temp),nchar(programs.temp)))
-         ) |>
-  select(-c(programs.temp))
-
-########################################
-#####set up program staff dataframe#####
-########################################
-#create 80 person dataframe
-set.seed(160)
-staff <- data.frame(
-  staff = ch_name(sizen2,messy=TRUE),
-  prg   = sample(prgnm2, size=sizen2, replace = TRUE)
-  )
-set.seed(160)
-staff.update <- data.frame(
-  staff = ch_name(sizen4,messy=TRUE),
-  prg   = sample(prgnm2, size=sizen4, replace = TRUE)
-  )
+#data setup
+{{< include data_setup.R >}}
 
 ###################################
 ####write out dataframes to CSV####
@@ -185,10 +65,10 @@ write.csv(staff.update,"staffupdate.csv", row.names = FALSE)
 ```
 
 ```{r toggle, echo=FALSE}
-#ANALYSIS TOGGLE
-######################################
-valset  <- 0 #set valset to 0 for first iteration; 1 for updated data iteration
-ALL.BY  <- F #change to F if you want to plot recidivism rate over two years TOTAL (T if you want to stratify by year)
+
+#toggle data and year format
+{{< include toggle.R >}}
+{{< include toggle_allby.R >}}
 
 #colors
 date1c  <- "deepskyblue1"
@@ -196,18 +76,11 @@ date2c  <- "darkolivegreen3"
 staffc  <- "brown"
 hlinew1 <- "orange"
 hlinew2 <- "darkgrey"
-
-######################################
-roster  <- if(valset==0) {roster} else {roster.update} #options: roster; roster.update
-date1   <- if(valset==0) {date1}  else {date3}         #options: date1 (within roster); date3 (within roster.update)
-date2   <- if(valset==0) {date2}  else {date4}         #options: date2 (within roster); date4 (within roster.update)
-staff   <- if(valset==0) {staff}  else {staff.update}  #options: staff; staff.update
-######################################
 ```
 
 ```{r remove, echo=FALSE}
 #programs to remove per the CWC report
-rm.pgms <- c("bcs", "brave", "sotrt", "mhsd", "resolve")
+{{< include rm_pgms.R >}}
 ```
 
 ## Data Exploration
@@ -257,7 +130,7 @@ It's a really good thing we checked! From the table above it appears we have `r 
 ```{r nodup}
 #| code-fold: show
 #deduplicate across all columns
-roster.nodup <- roster[!duplicated(roster), ]
+{{< include dedup.R >}}
 
 #check for dups again
 roster.nodup[duplicated(roster.nodup) | duplicated(roster.nodup, fromLast=TRUE),]
@@ -305,24 +178,7 @@ It looks like there are some errors in your data across `programs`, `ret`, and `
 
 ```{r cleanroster}
 #clean program names
-roster.clean <- roster.nodup |>
-  #fix programs, dates, and returns
-  mutate(programs_clean = case_when(programs == "bgs" ~ "bcs",
-                                    programs == "fbt" ~ "dbt",
-                                    programs == "brv" ~ "brave",
-                                    programs == "rdp" ~ "rdap",
-                                    TRUE ~ programs),
-         
-         #dates - assume that wrong dates occurred in 2017
-         dt      = case_when(year(dt) < 2017 ~ `year<-`(dt, 2017),
-                                    TRUE ~ dt),
-         
-         #returns - assume that wrong returns should all be =1
-         ret            = case_when(ret == -1 ~ 1,
-                                    ret == 2  ~ 1,
-                                    ret == 11 ~ 1,
-                                    TRUE ~ ret)
-         )
+{{< include roster_clean.R >}}
 
 #review cleaned program names
 roster.clean |>
@@ -349,37 +205,8 @@ Now that we have a clean dataset, we can finally calculate recidivism rates for 
 ```{r explore7}
 ##create dataset of numerators and denominators
 #recidivism rates overall
-roster2.1 <- roster.clean |>
-  mutate(year = factor(year(dt))) |>
-  select(-c(client_names,age,programs)) |>
-  group_by(programs_clean) |>
-  count(ret) |>
-  mutate(clients_served = sum(n),
-         recid_rate_all = case_when(ret == 1 ~ round(n/clients_served,2),
-                                ret == 0 ~ 0)
-         ) |>
-  group_by(programs_clean) |>
-  slice(n()) |>
-  select(-c(ret, n)) |>
-  rename(clients_served_all = clients_served)
+{{< include rates.R >}}
 
-#recidivism rates by year
-roster2.2 <- roster.clean |>
-  mutate(year = factor(year(dt))) |>
-  select(-c(client_names,age,programs)) |>
-  group_by(programs_clean,year) |>
-  count(ret,year) |>
-  mutate(clients_served = sum(n),
-         recid_rate_year= case_when(ret == 1 ~ round(n/clients_served,2),
-                                ret == 0 ~ 0)
-         ) |>
-  group_by(programs_clean,year) |>
-  slice(n()) |>
-  select(-c(ret, n)) |>
-  rename(clients_served_year = clients_served)
-
-#combine data by programs to capture recidivism rates overall and by year
-roster2 <- inner_join(roster2.1, roster2.2, by = "programs_clean")
 #verify that join did not lose any observations
 triplecheck <- anti_join(roster2.1, roster2.2, by = "programs_clean")
 
@@ -448,21 +275,11 @@ Well - it looks like yet again we have data with more than 10 programs; `r prgnu
 
 ```{r cleanstaff}
 #clean program names
-staff.clean <- staff |>
-  mutate(programs_clean = case_when(prg == "resol" ~ "resolve",
-                                    prg == "brv" ~ "brave",
-                                    prg == "stg" ~ "stages",
-                                    TRUE ~ prg))
+{{< include staff_clean.R >}}
 
 #check cleaned program names
 staffcheck <- staff.clean |>
   count(programs_clean,prg)
-
-#create dataset of staff counts
-staff2 <- staff.clean |>
-  select(-c(staff,prg)) |>
-  count(programs_clean) |>
-  rename(num_staff = n)
 
 #print staffing
 staff.clean |>
@@ -477,36 +294,15 @@ staff.clean |>
 We have to get out those results **now!** Let's combine the program staff and recidivism rates data so we can print out a table for our Director. Create some tables and put them into a format the Director will appreciate.
 
 ```{r merge}
-tabout <- inner_join(roster2, staff2, by = ("programs_clean")) |>
-  select(-c(clients_served_all, clients_served_year)) |>
-  ungroup() |>
-  #if any years are missing, fill in
-  complete(year, nesting(programs_clean,num_staff),
-           fill = list(recid_rate_all = NA, recid_rate_year = NA)
-  ) |>
-  #correct missing values for recid_rate_all since this is the overall recidivism rate across multiple years
-  group_by(programs_clean) |>
-  fill(recid_rate_all, .direction = "updown") |>
-  ungroup() |>
-  #create final program names for table
-  mutate(program_official = case_when(programs_clean == "am"        ~ "Anger Management",
-                                      programs_clean == "bcs"       ~ "Basic Cognitive Skills",
-                                      programs_clean == "brave"     ~ "The Bureau Rehabilitation and Values Enhancement Program",
-                                      programs_clean == "challenge" ~ "Challenge Program",
-                                      programs_clean == "dbt"       ~ "Dialectical Behavior Therapy",
-                                      programs_clean == "mhsd"      ~ "Mental Health Step Down Program",
-                                      programs_clean == "rdap"      ~ "Residential Drug Abuse Program",
-                                      programs_clean == "resolve"   ~ "The Resolve Program",
-                                      programs_clean == "sotrt"     ~ "Sex Offender Treatment Program",
-                                      programs_clean == "stages"    ~ "Steps Toward Awareness, Growth, and Emotional Strength Program",
-                                      TRUE ~ programs_clean))
+#create table dataset
+{{< include tabledata.R >}}
+
 #verify join was successful
 joincheck <- anti_join(roster2, staff2, by = ("programs_clean"))
 
-
 #print out overall rates and staff
-tabout |> 
-  select(c(program_official, recid_rate_all, num_staff)) |> 
+{{< include finaltable_report.R >}} 
+reportit |> 
   datatable(extensions = 'Buttons', rownames=FALSE, colnames=c('Program', 'Recidivism Rate', 'Staffing'), 
                           options=list(pageLength=10, dom='Bt',
   buttons = list(
@@ -516,9 +312,6 @@ tabout |>
 )
 )
 )
-
-#for positioning in plotting
-last <- tail(tabout$programs_clean,n=1)
 ```
 
 <br />
@@ -632,32 +425,18 @@ cat(capture.output(cat(paste0(adv_rate,"%"), "average recidivism rate overall fo
 
 ```
 
-This was amazing work; our Director is so happy! But wait! Oh no!! The Center Wing Coaltion advocacy group just published [a report](cwc_report.html) that EBBR programs' recidivism rates are at an all time high of `r adv_rate`% with a report that claims to have used **your** DOC's reported data on EBBR program recidivism rates! Find out what's going on, and fast!
+This was amazing work; our Director is so happy! But wait! Oh no!! The Center Wing Coalition advocacy group just published [a report](cwc_report.html) that EBBR programs' recidivism rates are at an all time high of `r adv_rate`% with a report that claims to have used **your** DOC's reported data on EBBR program recidivism rates! Find out what's going on, and fast!
 
 ```{r unweighted}
 #manage the data to produce recidivism rates
-tabout2 <- inner_join(roster2, staff2, by = ("programs_clean")) |>
-  ungroup() |>
-  #if any years are missing, fill in
-  complete(year, nesting(programs_clean,num_staff),
-           fill = list(recid_rate_all = NA, recid_rate_year = NA)
-  ) |>
-  #correct missing values for recid_rate_all since this is the overall recidivism rate across multiple years
-  group_by(programs_clean) |>
-  fill(c(recid_rate_all,clients_served_all), .direction = "updown")
+{{< include cwc_unw.R >}}
+
 #verify join was successful
 doublecheck <- anti_join(roster2, staff2, by = ("programs_clean"))
 
-#calculate average recidivism rate across programs from all years
-unw.a <- round(mean(tabout2$recid_rate_all,na.rm=TRUE),2)
+#print values
 print(paste0(unw.a*100,"%", " average recidivism rate overall"))
-
-#calculate average recidivism rate across programs from year 1
-unw.d1 <- round(mean(tabout2[which(tabout2$year==date1),]$recid_rate_year,na.rm=TRUE),2)
 print(paste0(unw.d1*100,"%", " average recidivism rate in ",date1))
-
-#calculate average recidivism rate across programs from year 2
-unw.d2 <- round(mean(tabout2[which(tabout2$year==date2),]$recid_rate_year,na.rm=TRUE),2)
 print(paste0(unw.d2*100,"%", " average recidivism rate in ",date2))
 
 ```
@@ -680,40 +459,15 @@ Alright! There's the number the advocacy group reported! But what's missing?
 
 ```{r weighted1}
 #manage the data to produce recidivism rates
-#total clients served (all years)
-total.a <- sum(tabout2[which(tabout2$year==date1),]$clients_served_all, na.rm=TRUE)
-tabout2.wgt <- tabout2 |>
-  filter(year==date1) |>
-  mutate(recid_rate_all_w = clients_served_all*recid_rate_all)
-w.a <- round(sum(tabout2.wgt$recid_rate_all_w)/total.a,2)
-print(paste0(w.a*100,"%", " average recidivism rate (weighted) in overall"))
+#total clients served (all years, year1, year2)
+{{< include cwc_w.R >}}
 
-#total clients served (all years), JUST 5 PROGRAMS!!!
-total.a5 <- sum(tabout2[which(tabout2$year==date1 & !tabout2$programs_clean %in% rm.pgms),]$clients_served_all, na.rm=TRUE)
-tabout2.wgt5 <- tabout2 |>
-  filter(!(programs_clean %in% rm.pgms) & year==date1) |>
-  mutate(recid_rate_all_w = clients_served_all*recid_rate_all)
-w.a5 <- round(sum(tabout2.wgt5$recid_rate_all_w)/total.a5,2)
+#print values
+print(paste0(w.a*100,"%", " average recidivism rate (weighted) in overall"))
 print(capture.output(cat(paste0(w.a5*100,"%"), "average recidivism rate (weighted) overall for the following programs:", rm.pgms, sep=" ")))
 ```
 
 Alright! If we just weight our data then we see that the average overall recidivism rate across the five programs that the advocacy group highlighted is only `r w.a5*100`%. Great work!
-
-```{r weighted2, echo=FALSE}
-#total clients served (year 1)
-total.d1 <- sum(tabout2[which(tabout2$year==date1),]$clients_served_year,na.rm=TRUE)
-tabout2.wgt <- tabout2 |>
-  filter(year==date1) |>
-  mutate(recid_rate_year_w = clients_served_year*recid_rate_year)
-w.d1 <- round(sum(tabout2.wgt$recid_rate_year_w,na.rm=TRUE)/total.d1,2)
-
-#total clients served (year2)
-total.d2 <- sum(tabout2[which(tabout2$year==date2),]$clients_served_year,na.rm=TRUE)
-tabout2.wgt <- tabout2 |>
-  filter(year==date2) |>
-  mutate(recid_rate_year_w = clients_served_year*recid_rate_year)
-w.d2 <- round(sum(tabout2.wgt$recid_rate_year_w,na.rm=TRUE)/total.d2,2)
-```
 
 Now let's report it through some fancy data visualization work.
 
@@ -726,7 +480,7 @@ Change the highlighted code below (`ALL.BY`, `CWC`, and plot colors) to update y
 ::: {.callout-tip}
 ## Download your plot!
 
-A `Download Image` button will appear when you scroll your mouse cursor over the plot.
+A `Download Image` button will appear when you hover over the plot.
 :::
 
 ## More Cool Data Viz!
@@ -966,6 +720,30 @@ gg_line +
 ## Final Report
 
 This exploratory document has been really useful for our internal purposes! But what if we want to get all of the pertinent info into a single report for your Director in a format they can actually digest; Something similar to the original report?
+
+::: {.callout-tip collapse=true}
+## Expand to view the R Markdown that produces the PDF/DOCX
+```{r rendered, echo=FALSE, output=TRUE}
+#code that is rendered
+print(noquote(scan("finaltable.Rmd", what=character(), skip=0, nlines=105, sep='\n')))
+```
+:::
+
+```{r tablefinal, include=FALSE}
+#render final report for director
+
+#create PDF output
+quarto_render("finaltable.Rmd", output_format = "pdf")
+
+#create word doc output
+render(       "finaltable.Rmd", output_file   = "finaltable.docx")
+sample.doc                      <- read_docx("finaltable.docx")                                                           #read in rendered doc without image
+sample.doc$officer_cursor$which <- 6                                                                                      #set position to place image
+sample.doc                      <- body_add_img(sample.doc, src = "rrfinal.png", width = 6.4, height = 4.8, pos = "before") #place image
+print(sample.doc, target = "finaltable.docx")                                                                             #recreate output
+```
+
+![](finaltable.pdf){width=100% height=1100}
 
 ## R Session
 

@@ -38,10 +38,8 @@
 # possible output files
 *.docx
 *.doc
-*.html
 *.htm
 *.log
-*.pdf
 *.pptx
 *.ppt
 *.rtf
@@ -53,7 +51,6 @@
 *.emf
 *.jpeg
 *.jpg
-*.png
 *.svg
 *.tiff
 *.tif

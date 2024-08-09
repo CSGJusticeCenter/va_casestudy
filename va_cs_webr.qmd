@@ -1,287 +1,36 @@
 ```{webr-r}
-#programs
-#for participants
-prgnm = c("am,0",        "am,0",        "am,0",        "am,0",        "am,0",                      "am,1",        "am,1",        "am,1",        #CWC
-          
-          "brave,0",     "brave,0",     "brave,0",     "brave,0",     "brave,0",                   "brave,1",                                        #spelling error below
-          
-          "bcs,0",       "bcs,0",                                                                  "bcs,1",       "bcs,1",                           #spelling error below
-          
-          "resolve,0",   "resolve,0",                                                              "resolve,1",   "resolve,1",
-          
-                                                                                                   "rdap,1",      "rdap,1",      "rdap,1",      #CWC #spelling error below 
-          
-                                                                                                   "dbt,1",       "dbt,1",                      #CWC #spelling error below
-          
-          "sotrt,0",                                                                               "sotrt,1",     "sotrt,1",
-          
-          "challenge,0", "challenge,0", "challenge,0", "challenge,0", "challenge,0", "challenge,0","challenge,1", "challenge,1",                #CWC
-          
-          "mhsd,0",      "mhsd,0",                                                                 "mhsd,1",
-          
-          "stages,0",    "stages,0",    "stages,0",    "stages,0",    "stages,0",    "stages,0",   "stages,1",    "stages,1",    "stages,1",    #CWC
-          
-          #spelling errors
-          "bgs,0", "bgs,0",
-          "fbt,0", "fbt,0",
-          "brv,0", "brv,0",
-          "rdp,0", "rdp,0")
-
-#for staff
-prgnm2 = c("am",
-          "brave",
-          "bcs",
-          "resolve",
-          "rdap",
-          "dbt",
-          "sotrt",
-          "challenge",
-          "mhsd",
-          "stages",
-          #spelling errors
-          "brv",
-          "stg",
-          "resol")
-
-#dataframe sizes: sizen - roster, sizen2 - program staff, sizen3 - 2nd roster
-sizen  = 50 #DO NOT CHANGE - THIS IS SIZE OF DATA BEING SAMPLED ABOVE
-date1  = 2017
-date2  = 2018
-
-##staff
-sizen2 = 80 #2017-2018 staff
-sizen4 = 84 #2021-2022 staff
-
-############################################
-#####set up roster/recidivism dataframe#####
-############################################
-#create person-level dataframe
-set.seed(80)
-roster.prep <- data.frame(
-  #create names
-  client_names  = ch_name(sizen),
-  #create age
-  age           = round(rnorm(sizen,29,5)),
-  #create programs/returns to prison
-  #data being sampled is exactly 50
-  programs.temp = sample(prgnm, size=50, replace = FALSE),
-  #create dates in programs
-  dt            = as.Date("2018-01-01") + round(rnorm(sizen, mean = 0, sd = 120))
-  ) |>
-  #split programs/returns
-  mutate(programs  = substr(programs.temp,1,nchar(programs.temp)-2),
-         ret       = as.numeric(substr(programs.temp,nchar(programs.temp),nchar(programs.temp))),
-         #put in a random date to throw things off
-         dt        = case_when(row_number() == sizen-3  ~ as.Date(paste0('2007/06/05')), 
-                               row_number() == sizen-20 ~ as.Date(paste0('1997/08/22')),
-                            TRUE ~ dt),
-         #put in a random return values
-         ret       = case_when(row_number() == sizen-10  ~ -1, 
-                               row_number() == sizen-30  ~ 11,
-                               row_number() == sizen-17  ~ 2,
-                            TRUE ~ ret)
-         ) |>
-  select(-c(programs.temp)) 
-
-#create duplicates
-roster <- roster.prep |> 
-  filter(row_number() %in% c(1:5)) |> 
-  bind_rows(roster.prep)
-
-###############################################################
-#####set up roster/recidivism dataframe for updated roster#####
-###############################################################
-#create 1000 person dataframe
-sizen3 = 1000
-date3  = 2021
-date4  = 2022
-
-set.seed(20012)
-roster.update <- data.frame(
-  client_names    = ch_name(sizen3),
-  age             = round(rnorm(sizen3,29,5)),
-  programs.temp   = sample(prgnm, size=sizen3, replace = TRUE),
-  dt       = as.Date("2022-01-01") + round(rnorm(sizen, mean = 0, sd = 120))
-  ) |>
-  mutate(programs = substr(programs.temp,1,nchar(programs.temp)-2),
-         ret  = as.numeric(substr(programs.temp,nchar(programs.temp),nchar(programs.temp)))
-         ) |>
-  select(-c(programs.temp))
-
-########################################
-#####set up program staff dataframe#####
-########################################
-#create 80 person dataframe
-set.seed(160)
-staff <- data.frame(
-  staff = ch_name(sizen2,messy=TRUE),
-  prg   = sample(prgnm2, size=sizen2, replace = TRUE)
-  )
-set.seed(160)
-staff.update <- data.frame(
-  staff = ch_name(sizen4,messy=TRUE),
-  prg   = sample(prgnm2, size=sizen4, replace = TRUE)
-  )
+#data setup
+{{< include data_setup.R >}}
 
 #ANALYSIS TOGGLE
 ######################################
-valset  <- 0 #set valset to 0 for first iteration; 1 for updated data iteration
-
-######################################
-roster  <- if(valset==0) {roster} else {roster.update} #options: roster; roster.update
-date1   <- if(valset==0) {date1}  else {date3}         #options: date1 (within roster); date3 (within roster.update)
-date2   <- if(valset==0) {date2}  else {date4}         #options: date2 (within roster); date4 (within roster.update)
-staff   <- if(valset==0) {staff}  else {staff.update}  #options: staff; staff.update
-######################################
+{{< include toggle.R >}}
 
 #programs to remove per the CWC report
-rm.pgms <- c("bcs", "brave", "sotrt", "mhsd", "resolve")
+{{< include rm_pgms.R >}}
 
 #deduplicate across all columns
-roster.nodup <- roster[!duplicated(roster), ]
+{{< include dedup.R >}}
 
 #clean program names
-roster.clean <- roster.nodup |>
-  #fix programs, dates, and returns
-  mutate(programs_clean = case_when(programs == "bgs" ~ "bcs",
-                                    programs == "fbt" ~ "dbt",
-                                    programs == "brv" ~ "brave",
-                                    programs == "rdp" ~ "rdap",
-                                    TRUE ~ programs),
-         
-         #dates - assume that wrong dates occurred in 2017
-         dt      = case_when(year(dt) < 2017 ~ `year<-`(dt, 2017),
-                                    TRUE ~ dt),
-         
-         #returns - assume that wrong returns should all be =1
-         ret            = case_when(ret == -1 ~ 1,
-                                    ret == 2  ~ 1,
-                                    ret == 11 ~ 1,
-                                    TRUE ~ ret)
-         )
+{{< include roster_clean.R >}}
 
 ##create dataset of numerators and denominators
 #recidivism rates overall
-roster2.1 <- roster.clean |>
-  mutate(year = factor(year(dt))) |>
-  select(-c(client_names,age,programs)) |>
-  group_by(programs_clean) |>
-  count(ret) |>
-  mutate(clients_served = sum(n),
-         recid_rate_all = case_when(ret == 1 ~ round(n/clients_served,2),
-                                ret == 0 ~ 0)
-         ) |>
-  group_by(programs_clean) |>
-  slice(n()) |>
-  select(-c(ret, n)) |>
-  rename(clients_served_all = clients_served)
-
-#recidivism rates by year
-roster2.2 <- roster.clean |>
-  mutate(year = factor(year(dt))) |>
-  select(-c(client_names,age,programs)) |>
-  group_by(programs_clean,year) |>
-  count(ret,year) |>
-  mutate(clients_served = sum(n),
-         recid_rate_year= case_when(ret == 1 ~ round(n/clients_served,2),
-                                ret == 0 ~ 0)
-         ) |>
-  group_by(programs_clean,year) |>
-  slice(n()) |>
-  select(-c(ret, n)) |>
-  rename(clients_served_year = clients_served)
-
-#combine data by programs to capture recidivism rates overall and by year
-roster2 <- inner_join(roster2.1, roster2.2, by = "programs_clean")
+{{< include rates.R >}}
 
 #clean program names
-staff.clean <- staff |>
-  mutate(programs_clean = case_when(prg == "resol" ~ "resolve",
-                                    prg == "brv" ~ "brave",
-                                    prg == "stg" ~ "stages",
-                                    TRUE ~ prg))
+{{< include staff_clean.R >}}
 
-#create dataset of staff counts
-staff2 <- staff.clean |>
-  select(-c(staff,prg)) |>
-  count(programs_clean) |>
-  rename(num_staff = n)
-
-tabout <- inner_join(roster2, staff2, by = ("programs_clean")) |>
-  select(-c(clients_served_all, clients_served_year)) |>
-  ungroup() |>
-  #if any years are missing, fill in
-  complete(year, nesting(programs_clean,num_staff),
-           fill = list(recid_rate_all = NA, recid_rate_year = NA)
-  ) |>
-  #correct missing values for recid_rate_all since this is the overall recidivism rate across multiple years
-  group_by(programs_clean) |>
-  fill(recid_rate_all, .direction = "updown") |>
-  ungroup() |>
-  #create final program names for table
-  mutate(program_official = case_when(programs_clean == "am"        ~ "Anger Management",
-                                      programs_clean == "bcs"       ~ "Basic Cognitive Skills",
-                                      programs_clean == "brave"     ~ "The Bureau Rehabilitation and Values Enhancement Program",
-                                      programs_clean == "challenge" ~ "Challenge Program",
-                                      programs_clean == "dbt"       ~ "Dialectical Behavior Therapy",
-                                      programs_clean == "mhsd"      ~ "Mental Health Step Down Program",
-                                      programs_clean == "rdap"      ~ "Residential Drug Abuse Program",
-                                      programs_clean == "resolve"   ~ "The Resolve Program",
-                                      programs_clean == "sotrt"     ~ "Sex Offender Treatment Program",
-                                      programs_clean == "stages"    ~ "Steps Toward Awareness, Growth, and Emotional Strength Program",
-                                      TRUE ~ programs_clean))
-
-#for positioning in plotting
-last <- tail(tabout$programs_clean,n=1)
+#create table dataset
+{{< include tabledata.R >}}
 
 #manage the data to produce recidivism rates
-tabout2 <- inner_join(roster2, staff2, by = ("programs_clean")) |>
-  ungroup() |>
-  #if any years are missing, fill in
-  complete(year, nesting(programs_clean,num_staff),
-           fill = list(recid_rate_all = NA, recid_rate_year = NA)
-  ) |>
-  #correct missing values for recid_rate_all since this is the overall recidivism rate across multiple years
-  group_by(programs_clean) |>
-  fill(c(recid_rate_all,clients_served_all), .direction = "updown")
-
-#calculate average recidivism rate across programs from all years
-unw.a <- round(mean(tabout2$recid_rate_all,na.rm=TRUE),2)
-
-#calculate average recidivism rate across programs from year 1
-unw.d1 <- round(mean(tabout2[which(tabout2$year==date1),]$recid_rate_year,na.rm=TRUE),2)
-
-#calculate average recidivism rate across programs from year 2
-unw.d2 <- round(mean(tabout2[which(tabout2$year==date2),]$recid_rate_year,na.rm=TRUE),2)
+{{< include cwc_unw.R >}}
 
 #manage the data to produce recidivism rates
-#total clients served (all years)
-total.a <- sum(tabout2[which(tabout2$year==date1),]$clients_served_all, na.rm=TRUE)
-tabout2.wgt <- tabout2 |>
-  filter(year==date1) |>
-  mutate(recid_rate_all_w = clients_served_all*recid_rate_all)
-w.a <- round(sum(tabout2.wgt$recid_rate_all_w)/total.a,2)
-
-#total clients served (all years), JUST 5 PROGRAMS!!!
-total.a5 <- sum(tabout2[which(tabout2$year==date1 & !tabout2$programs_clean %in% rm.pgms),]$clients_served_all, na.rm=TRUE)
-tabout2.wgt5 <- tabout2 |>
-  filter(!(programs_clean %in% rm.pgms) & year==date1) |>
-  mutate(recid_rate_all_w = clients_served_all*recid_rate_all)
-w.a5 <- round(sum(tabout2.wgt5$recid_rate_all_w)/total.a5,2)
-
-#total clients served (year 1)
-total.d1 <- sum(tabout2[which(tabout2$year==date1),]$clients_served_year,na.rm=TRUE)
-tabout2.wgt <- tabout2 |>
-  filter(year==date1) |>
-  mutate(recid_rate_year_w = clients_served_year*recid_rate_year)
-w.d1 <- round(sum(tabout2.wgt$recid_rate_year_w,na.rm=TRUE)/total.d1,2)
-
-#total clients served (year2)
-total.d2 <- sum(tabout2[which(tabout2$year==date2),]$clients_served_year,na.rm=TRUE)
-tabout2.wgt <- tabout2 |>
-  filter(year==date2) |>
-  mutate(recid_rate_year_w = clients_served_year*recid_rate_year)
-w.d2 <- round(sum(tabout2.wgt$recid_rate_year_w,na.rm=TRUE)/total.d2,2)
+#total clients served (all years, year1, year2)
+{{< include cwc_w.R >}}
 ```
 
 ```{webr-r}
@@ -345,7 +94,7 @@ w   <- if(ALL.BY) c(w.d1,w.d2) else w.a
 unw <- if(ALL.BY) c(unw.d1,unw.d2) else unw.a
 
 #add recidivism weight averages to plot
-rr + 
+rrfinal <- rr + 
   {if(!CWC) geom_hline(yintercept=w[1], linetype = "dashed", color = hlinew1, size = 1)} +
   {if(ALL.BY & !CWC) geom_hline(yintercept=w[2], linetype = "dashed", color = hlinew1, size = 1)}+
   {if(!CWC)geom_hline(yintercept=unw[1], linetype = "dashed", color = hlinew2, size = 1)} +
@@ -371,5 +120,6 @@ rr +
                                               ALL.BY &  date1 == date2 ~ paste0(date1,"\nUnweighted avg: ",unw[1]))) |>
                filter(programs_clean == last & year == date2),
              nudge_x = -8,
-             min.segment.length = Inf)} 
+             min.segment.length = Inf)}
+rrfinal
 ```

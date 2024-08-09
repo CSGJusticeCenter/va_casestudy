@@ -57,5 +57,7 @@ format:
     link-external-newwindow: true
     code-overflow: wrap
     title-prefix: "ADC Virtual Academy"
+    include-in-header: 
+      - file: google-font.html
     code-fold: true
     code-summary: "Reveal R code"
