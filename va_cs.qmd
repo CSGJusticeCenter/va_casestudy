@@ -719,28 +719,30 @@ gg_line +
 
 ## Final Report
 
-This exploratory document has been really useful for our internal purposes! But what if we want to get all of the pertinent info into a single report for your Director in a format they can actually digest; Something similar to the original report?
+This exploratory document has been really useful for our internal purposes! But what if we want to get all of the pertinent info into a single report for your Director in a format they can actually digest; something similar to the original report?
 
 ::: {.callout-tip collapse=true}
 ## Expand to view the R Markdown that produces the PDF/DOCX
 ```{r rendered, echo=FALSE, output=TRUE}
 #code that is rendered
-print(noquote(scan("finaltable.Rmd", what=character(), skip=0, nlines=105, sep='\n')))
+print(noquote(scan("finaltable.Rmd", what=character(), skip=0, nlines=97, sep='\n')))
 ```
 :::
 
 ```{r tablefinal, include=FALSE}
 #render final report for director
 
-#create PDF output
+##create PDF output
 quarto_render("finaltable.Rmd", output_format = "pdf")
 
-#create word doc output
+##create word doc output
 render(       "finaltable.Rmd", output_file   = "finaltable.docx")
-sample.doc                      <- read_docx("finaltable.docx")                                                           #read in rendered doc without image
-sample.doc$officer_cursor$which <- 6                                                                                      #set position to place image
+
+#insert image
+sample.doc                      <- read_docx("finaltable.docx")                                                             #read in rendered doc without image
+sample.doc$officer_cursor$which <- 6                                                                                        #set position to place image
 sample.doc                      <- body_add_img(sample.doc, src = "rrfinal.png", width = 6.4, height = 4.8, pos = "before") #place image
-print(sample.doc, target = "finaltable.docx")                                                                             #recreate output
+print(sample.doc, target = "finaltable.docx")                                                                               #recreate output
 ```
 
 ![](finaltable.pdf){width=100% height=1100}

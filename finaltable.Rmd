@@ -1,17 +1,13 @@
 ---
 title: "GDOC Program Recidivism/Staffing Requirements"
-subtitle: "August 2024"
+subtitle: "`r format(Sys.Date(), '%B %Y')`"
 geometry: "left=1.5cm,right=1.5cm,top=0cm,bottom=1cm"
 ---
 \setlength{\headsep}{-0.25cm}
 \pagenumbering{gobble}
 \vspace{-2.6truecm}
 
-This report includes the overall recidivism rates (2018-2019) for evidence-based programming provided in the Gotham Department of Corrections facilities for high-risk people. Staffing numbers describe how many full-time employees are needed over the course of a year to keep each program running. Each program facilitator completes extensive training and must complete eight hours of continuing education each year. 
-
-\small
-
-```{r table, echo=FALSE, message=FALSE, warning=FALSE}
+```{r pretable, echo=FALSE, message=FALSE, warning=FALSE}
 library(charlatan)
 library(lubridate)
 library(tidyverse)
@@ -20,13 +16,15 @@ library(ggrepel)
 
 #data setup
 source("data_setup.R")
-
-#ANALYSIS TOGGLE
-######################################
 source("toggle.R")
-
 source("toggle_allby.R")
+```
 
+This report includes the overall recidivism rates (`r date1`-`r date2`) for evidence-based programming provided in the Gotham Department of Corrections facilities for high-risk people. Staffing numbers describe how many full-time employees are needed over the course of a year to keep each program running. Each program facilitator completes extensive training and must complete eight hours of continuing education each year. 
+
+\small
+
+```{r table, echo=FALSE, message=FALSE, warning=FALSE}
 #programs to remove per the CWC report
 source("rm_pgms.R")
 
@@ -84,22 +82,16 @@ ggsave("rrfinal.png", width = 8, height = 6, units = "in")
 \includegraphics{rrfinal.pdf}
 \end{figure}
 
-```{r inline, include=FALSE}
-#calculate programs with lowest/highest recid. rates
-
-
-```
-
 \normalsize
 
 \vspace{-1truecm}
 
 ## Findings
 \vspace{-0.4cm}
-Overall, the programs that resulted in the lowest recidivism rates are the Mental Health Step Down Program and the Sex Offender Treatment Program. The programs that have the highest recidivism rates are Anger Management and Steps Toward Awareness, Growth, and Emotional Strength Program. 
+Overall, the program with the lowest recidivism rates is: `r reportit[which(reportit$recid_rate_all == min(reportit$recid_rate_all)),]$program_official`. The program with the highest recidivism rates is: `r reportit[which(reportit$recid_rate_all == max(reportit$recid_rate_all)),]$program_official`. The average weighted recidivism rate is `r w.a`.
 
 \vspace{-0.3cm}
 
 ## Methodology
 \vspace{-0.4cm}
-All participants have taken one of these programs right before release. The cohort analyzed were released from prison in 2018 and 2019. Overall recidivism rates are computed. 
+All participants have taken one of these programs right before release. The cohort analyzed were released from prison in `r date1-1` and `r date2-1`. Overall recidivism rates are computed. 
