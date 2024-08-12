@@ -66,18 +66,23 @@ print(dfSummary(roster, varnumbers = FALSE, valid.col = FALSE),
 numcol <- ncol(roster)
 ```
 
-Let's take a look at this EBRR program data. The name of our data is ``r dataname1``. Here's a quick look!
+Let's take a look at this EBRR program data. The name of our data is ``r dataname1``. Trying to gather anything from raw data row by row can be painful. We need to explore and synthesize what variables/columns we have, and get a quick summary of what they all look like. We know that GDOC has 10 programs. From what the summary below shows us, it appears we have `r numcol` variables in the ``r dataname1`` dataset. What further exploring, cleaning, and manipulation is required for us to successfully produce results for Director Summers?
+
+::: {.panel-tabset .nav-pills}
+
+## Quick look
 
 ```{r look}
 datatable(roster, rownames=FALSE, options=list(pageLength=5, dom='ltip'))
 ```
 
-<br />
-Trying to gather anything from raw data row by row can be painful. We need to explore and synthesize what variables/columns we have, and get a quick summary of what they all look like. We know that GDOC has 10 programs. From what the summary below shows us, it appears we have `r numcol` variables in the ``r dataname1`` dataset. What further exploring, cleaning, and manipulation is required for us to successfully produce results for Director Summers?
+## Summary
 
 ```{r explore2}
 #| ref-label: 'explore1'
 ```
+
+:::
 
 ## Data Cleaning and Manipulation
 
@@ -115,7 +120,11 @@ Alright! No more duplicates! What else could require cleaning that we haven't th
 
 ### Recoding
 
-We need to take a closer look at our other variables that may help us report out what the GDOC director needs. Let's start with our `programs` variable.
+We need to take a closer look at our other variables that may help us report out what the GDOC director needs. Let's start with our `programs`, `dt`, and `ret`.
+
+::: {.panel-tabset .nav-pills}
+
+## PROGRAMS
 
 ```{r explore5}
 #count total number of programs
@@ -127,9 +136,7 @@ print(freq(roster.nodup$programs, report.nas = FALSE, cumul = FALSE, display.typ
 prgnum <- n_distinct(roster.nodup$programs)
 ```
 
-<br />
-
-Hm - it looks like there are more than 10 programs; `r prgnum` programs to be exact. That doesn't match what you know about your GDOC EBRR programs! Could there be something wrong with the data? If there are issues with your `programs` variable, then there could be more issues we haven't discovered. 
+## DT
 
 ```{r explore6}
 #check out weird date values
@@ -137,36 +144,54 @@ yeardt <- as.factor(year(roster.nodup$dt))
 define_keywords(title.freq = "DT values")
 print(freq(yeardt, report.nas = FALSE, cumul = FALSE, display.type = FALSE), 
       method = "render", footnote = NA, Variable = "")
+```
 
+## RET
+
+```{r explore7}
 #check out weird return values
 define_keywords(title.freq = "RET values")
 print(freq(roster.nodup$ret, report.nas = FALSE, cumul = FALSE, display.type = FALSE), 
       method = "render", footnote = NA, Variable = "")
 ```
 
-<br />
+:::
 
-It looks like there are some errors in your data across `programs`, `ret`, and `dt`! We'll probably have to make some assumptions on our data. For example, `ret` must be our variable that indicates whether an individual enrolled in an EBRR program returned to prison within 365 days of their release. While the majority of the values are 0s and 1s, a select few are greater than 1 or less than 0. Clean them up and check your work so you can accurately report all EBRR programs and their associated recidivism rates.
+Hm - it looks like there are more than 10 programs; `r prgnum` programs to be exact. That doesn't match what you know about your GDOC EBRR programs! Could there be something wrong with the data? It looks like there are also some errors in your data across `programs`, `ret`, and `dt`! 
 
-```{r cleanroster}
+We'll probably have to make some assumptions on our data. For example, `ret` must be our variable that indicates whether an individual enrolled in an EBRR program returned to prison within 365 days of their release. While the majority of the values are 0s and 1s, a select few are greater than 1 or less than 0. Clean them up and check your work so you can accurately report all EBRR programs and their associated recidivism rates.
+
+::: {.panel-tabset .nav-pills}
+
+## PROGRAMS Clean
+
+```{r cleanroster1}
 #clean program names
 {{< include roster_clean.R >}}
 
 #review cleaned program names
 roster.clean |>
   count(programs_clean)
+```
 
+## DT Clean
+
+```{r cleanroster2}
 #review date values
 roster.clean |>
   count(year(dt))
+```
 
+## RET Clean
+
+```{r cleanroster3}
 #review out weird return values
 roster.clean |>
   count(ret)
 
 ```
 
-<br />
+:::
 
 Much better! 10 programs (`programs_clean`) as expected for our DOC, and cleaned dates (`dt`) and returns (`ret`)! 
 
@@ -174,7 +199,11 @@ Much better! 10 programs (`programs_clean`) as expected for our DOC, and cleaned
 
 Now that we have a clean dataset, we can finally calculate recidivism rates for all of our programs. Since we have dates spanning two years from the `dt` column, from `r min(roster.clean$dt)` to `r max(roster.clean$dt)`, perhaps we should calculate recidivism rates overall and by year.
 
-```{r explore7}
+::: {.panel-tabset .nav-pills}
+
+## Overall
+
+```{r explore8}
 ##create dataset of numerators and denominators
 #recidivism rates overall
 {{< include rates.R >}}
@@ -190,9 +219,9 @@ roster2.1 |>
                           options=list(pageLength=10, dom='t'))
 ```
 
-<br />
+## By Year
 
-```{r explore8}
+```{r explore9}
 #CROSSTALK by year rates
 shared_roster2 <- SharedData$new(roster2.2 |>
   arrange(year,programs_clean) |>
@@ -203,6 +232,7 @@ datatable(shared_roster2, rownames=FALSE, colnames=c('Year', 'Program', 'Recidiv
                           options=list(pageLength=10, dom='tip'))
 ```
 
+:::
 
 ### Staff data
 
@@ -229,21 +259,27 @@ staff[duplicated(staff) | duplicated(staff, fromLast=TRUE),]
 
 <br />
 
-Phew! No duplicates. That was a close one. Because we only have `r numcolst`, let's just take a closer look at our 10 programs covered by these staff.
+```{r staffval, include=FALSE}
+#count total number of programs
+prgnum.stf <- n_distinct(staff$prg)
+```
+
+Phew! No duplicates. That was a close one. 
+
+Looking closer at the summary, yet again we have data with more than 10 programs; `r prgnum.stf` to be exact. And there appear to be some errors in the data (again!?)! Clean them up so you can accurately report all EBRR programs and their associated program staff, and let's see how many staff we have by program! We'll be able to use this in our final report to our Director.
+
+::: {.panel-tabset .nav-pills}
+
+## PRG
 
 ```{r explorestaff5}
 #count total number of programs
 define_keywords(title.freq = "PRG values")
 print(freq(staff$prg, report.nas = FALSE, cumul = FALSE, display.type = FALSE), 
       method = "render", footnote = NA, Variable = "")
-
-#count total number of programs
-prgnum.stf <- n_distinct(staff$prg)
 ```
 
-<br />
-
-Well - it looks like yet again we have data with more than 10 programs; `r prgnum.stf` to be exact. And there appear to be some errors in your data (again!?)! Clean them up so you can accurately report all EBRR programs and their associated program staff, and let's see how many staff we have by program! We'll be able to use this in our final report to our Director.
+## PRG Clean
 
 ```{r cleanstaff}
 #clean program names
@@ -259,11 +295,17 @@ staff.clean |>
 
 ```
 
+:::
+
 ## Reporting Results
 
 ### Data Visualizations
 
 We have to get out those results **now!** Let's combine the program staff and recidivism rates data so we can print out a table for our Director. Create some tables and put them into a format the Director will appreciate.
+
+::: {.panel-tabset .nav-pills}
+
+## Tables: Overall
 
 ```{r merge}
 #create table dataset
@@ -286,13 +328,7 @@ reportit |>
 )
 ```
 
-<br />
-
-::: {.callout-important}
-## Important
-
-Save this for the final report!
-:::
+## Tables: By Year
 
 ```{r merge2}
 #CROSSTALK by year rates and staff
@@ -316,22 +352,38 @@ datatable(tabout2, extensions = 'Buttons', rownames=FALSE, colnames=c('Year', 'P
 )
 ```
 
-<br />
+:::
+
+::: {.callout-important}
+## Important
+
+Save this for the final report!
+:::
 
 These tables are fantastic! But I recall that our Director is a bit of a "visual" person. Can we turn these into some pretty charts?
 
-```{r basicviz, warning=FALSE}
+::: {.panel-tabset .nav-pills}
+
+## Plots: Overall
+
+```{r basicviz1, warning=FALSE}
 #basic bar chart of overall recidivism rate by program
 ggplot(tabout |>
          filter(year == date1)
        ,aes(x=programs_clean, y=recid_rate_all)) +
   geom_bar(stat="identity")
+```
 
+## Plots: By Year
+
+```{r basicviz2, warning=FALSE}
 #basic bar chart of recidivism rate by year by program
 ggplot(tabout,aes(x=programs_clean, y=recid_rate_year,fill=year)) +
          geom_bar(position="dodge", stat="identity")
 
 ```
+
+:::
 
 Oh I think we could do better than that!
 
@@ -427,7 +479,7 @@ Hm - something still doesn't line up. We need to keep investigating and find out
 
 ### Data-Informed Reporting
 
-Alright! There's the number the advocacy group reported! But what's missing?
+Alright - there's the number the advocacy group reported. But what's missing? Our Director is not going to be satisfied with just replicating the Center Wing Coalition results! What if we considered calculating a weighted recidivism rate?
 
 ```{r weighted1}
 #manage the data to produce recidivism rates
@@ -543,6 +595,10 @@ gg_dot +
 
 ### Plotting Overall
 
+::: {.panel-tabset .nav-pills}
+
+## Dots
+
 ```{r, include=FALSE}
 ALL.BY <- F
 ```
@@ -550,6 +606,8 @@ ALL.BY <- F
 ```{r dataviz5, warning=FALSE}
 #| ref-label: 'dataviz4'
 ```
+
+## Lollipops
 
 ```{r dataviz6, warning=FALSE, message=FALSE}
 ##horizontal lollipop chart
@@ -569,7 +627,11 @@ ggplot(tabout, aes(x=programs_clean, y=recid_rate_all)) +
   theme(plot.caption=element_text(hjust=0)) +
   #only print caption if a program is missing data
   {if(length(prg.NA)!=0) labs(caption = capture.output(cat("The following programs were missing data in some years:", unique(toupper(prg.NA)), sep=" ")))}
+```
 
+## More Lollipops!
+
+```{r dataviz7, warning=FALSE, message=FALSE}
 ##horizontal lollipop chart w/weighted average
 ggplot(tabout, aes(x=programs_clean, y=recid_rate_all)) +
   geom_segment(aes(x=programs_clean, xend=programs_clean, y=w.a, yend=recid_rate_all), color=date1c) +
@@ -595,19 +657,27 @@ ggplot(tabout, aes(x=programs_clean, y=recid_rate_all)) +
 
 ```
 
+:::
+
 ### Plotting by Year
 
 What about displaying these rates by year?
+
+::: {.panel-tabset .nav-pills}
+
+## Dots
 
 ```{r, include=FALSE}
 ALL.BY <- T
 ```
 
-```{r dataviz7, warning=FALSE}
+```{r dataviz8, warning=FALSE}
 #| ref-label: 'dataviz4'
 ```
 
-```{r dataviz8, warning=FALSE, message=FALSE}
+## Lines
+
+```{r dataviz9, warning=FALSE, message=FALSE}
 #plot!
 gg_line <- tabout.dates |>
   # add a variable for when rates are higher in date1 than in date2 (for colours)
@@ -689,6 +759,8 @@ gg_line +
   theme(plot.caption=element_text(hjust=0))
 ```
 
+:::
+
 ## Final Report
 
 This exploratory document has been really useful for our internal purposes! But what if we want to get all of the pertinent info into a single report for your Director in a format they can actually digest; something similar to the original report?
@@ -697,7 +769,7 @@ This exploratory document has been really useful for our internal purposes! But 
 ## Expand to view the R Markdown that produces the PDF/DOCX
 ```{r rendered, echo=FALSE, output=TRUE}
 #code that is rendered
-print(noquote(scan("finaltable.Rmd", what=character(), skip=0, nlines=97, sep='\n')))
+print(noquote(scan("finaltable.Rmd", what=character(), skip=0, nlines=98, sep='\n')))
 ```
 :::
 
