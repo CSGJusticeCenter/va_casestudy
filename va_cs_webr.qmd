@@ -4,6 +4,8 @@
 
 #ANALYSIS TOGGLE
 ######################################
+{{< include re_report.R >}}
+{{< include execute.R >}}
 {{< include toggle.R >}}
 
 #programs to remove per the CWC report

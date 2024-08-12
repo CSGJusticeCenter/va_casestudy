@@ -16,8 +16,9 @@ library(ggrepel)
 
 #data setup
 source("data_setup.R")
+source("re_report.R")
+source("execute.R")
 source("toggle.R")
-source("toggle_allby.R")
 ```
 
 This report includes the overall recidivism rates (`r date1`-`r date2`) for evidence-based programming provided in the Gotham Department of Corrections facilities for high-risk people. Staffing numbers describe how many full-time employees are needed over the course of a year to keep each program running. Each program facilitator completes extensive training and must complete eight hours of continuing education each year. 
@@ -68,7 +69,7 @@ source("cwc_unw.R")
 source("cwc_w.R")
 
 #build bar chart of recidivism rates across programs
-source2("va_cs_webr.qmd",45,123)
+source2("va_cs_webr.qmd",42,126)
 
 #plot print
 pdf(width=6.5,height=5,pointsize=15,file="rrfinal.pdf")

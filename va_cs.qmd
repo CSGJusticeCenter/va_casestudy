@@ -20,36 +20,8 @@ Our DOC captures 10 Evidence Based Recidivism Reduction (EBRR) programs in 2017 
 Your DOC Research Department tracks clients served and staff involved in running and supporting these programs.
 
 ```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
-#packages
-#install.packages("charlatan")
-#install.packages("tidyverse")
-#install.packages("knitr")
-#install.packages("ggrepel)
-#install.packages("summarytools")
-#install.packages("DT")
-#install.packages("devtools")
-#devtools::install_github("kent37/summarywidget")
-#devtools::install_github("rstudio/crosstalk")
-#install.packages("downloadthis")
-#install.packages("quarto")
-#install.packages("rmarkdown")
-#install.packages("officer")
-
-#activate!!
-library(charlatan)
-library(lubridate)
-library(tidyverse)
-library(knitr)
-library(ggrepel)
-library(summarytools)
-library(DT)
-library(devtools)
-library(summarywidget)
-library(crosstalk)
-library(downloadthis)
-library(quarto)
-library(rmarkdown)
-library(officer)
+#libraries
+{{< include libraries.R >}}
 
 #data setup
 {{< include data_setup.R >}}
@@ -65,10 +37,10 @@ write.csv(staff.update,"staffupdate.csv", row.names = FALSE)
 ```
 
 ```{r toggle, echo=FALSE}
-
 #toggle data and year format
+{{< include re_report.R >}}
+{{< include execute.R >}}
 {{< include toggle.R >}}
-{{< include toggle_allby.R >}}
 
 #colors
 date1c  <- "deepskyblue1"
@@ -94,14 +66,14 @@ print(dfSummary(roster, varnumbers = FALSE, valid.col = FALSE),
 numcol <- ncol(roster)
 ```
 
-Let's take a look at this EBRR program data. The name of our data is `roster`. Here's a quick look!
+Let's take a look at this EBRR program data. The name of our data is ``r dataname1``. Here's a quick look!
 
 ```{r look}
 datatable(roster, rownames=FALSE, options=list(pageLength=5, dom='ltip'))
 ```
 
 <br />
-Trying to gather anything from raw data row by row can be painful. We need to explore and synthesize what variables/columns we have, and get a quick summary of what they all look like. We know that GDOC has 10 programs. From what the summary below shows us, it appears we have `r numcol` variables in the `roster` dataset. What further exploring, cleaning, and manipulation is required for us to successfully produce results for Director Summers?
+Trying to gather anything from raw data row by row can be painful. We need to explore and synthesize what variables/columns we have, and get a quick summary of what they all look like. We know that GDOC has 10 programs. From what the summary below shows us, it appears we have `r numcol` variables in the ``r dataname1`` dataset. What further exploring, cleaning, and manipulation is required for us to successfully produce results for Director Summers?
 
 ```{r explore2}
 #| ref-label: 'explore1'
@@ -234,7 +206,7 @@ datatable(shared_roster2, rownames=FALSE, colnames=c('Year', 'Program', 'Recidiv
 
 ### Staff data
 
-Great work! Now let's take a look at our program staffing! Our DOC captures 10 Evidence Based Recidivism Reduction (EBRR) programs listed by the Federal Bureau of Prisons and the individuals involved.The name of our data is `staff`.
+Great work! Now let's take a look at our program staffing! Our DOC captures 10 Evidence Based Recidivism Reduction (EBRR) programs listed by the Federal Bureau of Prisons and the individuals involved. The name of our data is ``r dataname2``.
 
 ```{r explorestaff1}
 #what's in our data
@@ -384,8 +356,8 @@ rr <- ggplot(tabout |>
                mutate(recid_rate = case_when(ALL.BY  ~ recid_rate_year,
                                              !ALL.BY ~ recid_rate_all))
              ,aes(x=programs_clean, y=recid_rate, fill=year)) +
-  geom_bar(position = "dodge",stat = "identity") +
-  geom_text(aes(label=ifelse(year==dates[2],paste(num_staff,"staff"),"")), vjust=-0.3, color = staffc) +
+  geom_bar(position = "dodge",stat = "identity", na.rm=TRUE) +
+  geom_text(aes(label=ifelse(year==dates[2],paste(num_staff,"staff"),"")), vjust=-0.3, color = staffc, na.rm=TRUE) +
   scale_fill_manual(values=c(date1c,date2c)) +
   ylim(0,1) +
   ylab("Recidivism Rate") +
@@ -421,7 +393,7 @@ adv <- tabout |>
              year == date1) #dates repeat the same information, so just pick one date to average over
 #calculate ADVOCACY rate, which will be inserted into document text
 adv_rate <- round(mean(adv$recid_rate_all,na.rm=TRUE)*100,1)
-cat(capture.output(cat(paste0(adv_rate,"%"), "average recidivism rate overall for the following programs:", rm.pgms, sep=" ")))
+cat(capture.output(cat(paste0(adv_rate,"%"), "average recidivism rate overall for the following programs:", unique(tabout[which(!tabout$programs_clean %in% rm.pgms),]$programs_clean), sep=" ")))
 
 ```
 
@@ -464,7 +436,7 @@ Alright! There's the number the advocacy group reported! But what's missing?
 
 #print values
 print(paste0(w.a*100,"%", " average recidivism rate (weighted) in overall"))
-print(capture.output(cat(paste0(w.a5*100,"%"), "average recidivism rate (weighted) overall for the following programs:", rm.pgms, sep=" ")))
+print(capture.output(cat(paste0(w.a5*100,"%"), "average recidivism rate (weighted) overall for the following programs:", unique(tabout[which(!tabout$programs_clean %in% rm.pgms),]$programs_clean), sep=" ")))
 ```
 
 Alright! If we just weight our data then we see that the average overall recidivism rate across the five programs that the advocacy group highlighted is only `r w.a5*100`%. Great work!
