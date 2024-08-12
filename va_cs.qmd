@@ -66,7 +66,7 @@ print(dfSummary(roster, varnumbers = FALSE, valid.col = FALSE),
 numcol <- ncol(roster)
 ```
 
-Let's take a look at this EBRR program data. The name of our data is ``r dataname1``. Trying to gather anything from raw data row by row can be painful. We need to explore and synthesize what variables/columns we have, and get a quick summary of what they all look like. We know that GDOC has 10 programs. From what the summary below shows us, it appears we have `r numcol` variables in the ``r dataname1`` dataset. What further exploring, cleaning, and manipulation is required for us to successfully produce results for Director Summers?
+Let's take a look at this EBRR program data. The name of our data is ``r dataname1``. Trying to gather anything from raw data row by row can be painful. We need to explore and synthesize what variables/columns we have, and get a quick summary of what they all look like. We know that GDOC has 10 programs. How can we find out more?
 
 ::: {.panel-tabset .nav-pills}
 
@@ -83,6 +83,8 @@ datatable(roster, rownames=FALSE, options=list(pageLength=5, dom='ltip'))
 ```
 
 :::
+
+From what the summary above shows us, it appears we have `r numcol` variables in the ``r dataname1`` dataset. What further exploring, cleaning, and manipulation is required for us to successfully produce results for Director Summers?
 
 ## Data Cleaning and Manipulation
 
