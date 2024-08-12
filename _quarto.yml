@@ -5,6 +5,7 @@ book:
   title: "Summer Conference Case Study"
   chapters:
     - index.qmd
+    - oldreport.qmd
     - va_cs.qmd
     - cwc_report.qmd
   sidebar: 

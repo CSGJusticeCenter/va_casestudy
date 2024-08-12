@@ -9,7 +9,7 @@ OBJECTIVES:
   - Train agency analysts and their leadership to meet core competencies.
   - Develop trainings, resources, and communities of practice (CoPs) to implement standards.
 
-## Assigned Research Staff
+## Staff
 Joshua Mallett - Deputy Division Director, Research  
 Ruth Coffman - Deputy Program Director, State 
 
@@ -28,6 +28,7 @@ Ruth Coffman - Deputy Program Director, State
   |-- va_cs_webr_files         # files created from va_cs_webr.qmd
   |-- _quarto.yml
   |-- index.qmd                # welcome page
+  |-- oldreport.qmd            # case study old fake GDOC report
   |-- va_cs.qmd                # case study analysis to be rendered creating final HTML
   |-- cwc_report.qmd           # case study fake report
   |-- libraries.R              # libraries for running va_cs.qmd
