@@ -1,16 +1,20 @@
-# \<Virtual Academy\>
+# \<Virtual Academy Case Study\>
 This GitHub repository contains materials for the Advancing Data in Corrections (ADC) Virtual Academy conference (08/16/2024 - 08/17/2024). Specifically, code and guidance for the Case Study.
 
 ## Project overview  
-\<Description of project - purpose, goals, background, etc.\>  
-\<Links to research or analysis plan\>  
+The Virtual Academy for Corrections Analysts program, or VA, will set standards for and improve corrections departments’ analytical capacity in order to enable more informed planning and decision-making at the agency and state levels.
+
+OBJECTIVES:
+- Establish standards for DOC data analyst positions (Identify the core competencies for corrections data analysis and how to use the analysis results.)
+- Train agency analysts and their leadership to meet core competencies.
+- Develop trainings, resources, and communities of practice (CoPs) to implement standards.
 
 ## Assigned Research Staff
-Joshua Mallett - Deputy Division Director, Research
-Ruth Coffman - Deputy Program Directory, State 
+Joshua Mallett - Deputy Division Director, Research \n
+Ruth Coffman - Deputy Program Director, State 
 
 ## SharePoint folder  
-[Virtual Academy - Case Study](https://csgorg.sharepoint.com/sites/Team-JC-Research/Shared%20Documents/Forms/AllItems.aspx?OR=Teams%2DHL&CT=1629743326505&id=%2Fsites%2FTeam%2DJC%2DResearch%2FShared%20Documents%2FVA%2Fbackground%2FVA%20Summer%20Conference%2Fcase%5Fstudy&viewid=134e5f2c%2Df80c%2D46ef%2D8491%2D1eac7193eb98)  
+[Virtual Academy - Case Study](https://csgorg.sharepoint.com/sites/Team-JC-STATE/Shared%20Documents/Forms/AllItems.aspx?ga=1&isAscending=false&id=%2Fsites%2FTeam%2DJC%2DSTATE%2FShared%20Documents%2FGeneral%2FDivision%20Programs%2FCommunity%20Supervision%20and%20Technology%2FVACA%20%28Project%20Management%29%2FVA%20Summer%20Conference%2Fcase%5Fstudy&sortField=Modified&viewid=3fbac089%2Dd6b6%2D4ac6%2D8a14%2D862d1b5be6eb)  
 
 ```
 |-- <main project folder> 
@@ -20,17 +24,10 @@ Ruth Coffman - Deputy Program Directory, State
       |-- <subfolder>           # <description of contents>
 ```  
 
-[\<Policy team folder name/path - if applicable\>](<link-to-folder>)  
-  - \<notes\>
-
-## Repository  
-\<Relevant info about repository overall - e.g., if it's connected to another repo for the same project, etc.\>
-
 ### Branches  
-\<Description of repo branches - names, which branche(s) to work out of, when to make new branches, etc.\>
-- __main__: \<description\>
-- __develop__: \<description\>
-- etc.
+- __main__: for deploying to Netlify
+- __develop__: for making changes
+- __webr__: for implementing tests and new ideas
 
 ### Folder structure  
 \<Information about folders and files in repo\>   

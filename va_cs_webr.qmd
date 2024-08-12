@@ -1,0 +1,127 @@
+```{webr-r}
+#data setup
+{{< include data_setup.R >}}
+
+#ANALYSIS TOGGLE
+######################################
+{{< include re_report.R >}}
+{{< include execute.R >}}
+{{< include toggle.R >}}
+
+#programs to remove per the CWC report
+{{< include rm_pgms.R >}}
+
+#deduplicate across all columns
+{{< include dedup.R >}}
+
+#clean program names
+{{< include roster_clean.R >}}
+
+##create dataset of numerators and denominators
+#recidivism rates overall
+{{< include rates.R >}}
+
+#clean program names
+{{< include staff_clean.R >}}
+
+#create table dataset
+{{< include tabledata.R >}}
+
+#manage the data to produce recidivism rates
+{{< include cwc_unw.R >}}
+
+#manage the data to produce recidivism rates
+#total clients served (all years, year1, year2)
+{{< include cwc_w.R >}}
+```
+
+```{webr-r}
+#| context: interactive
+#| editor-max-height: 500
+#| editor-code-line-numbers: 5-6, 9-13
+#build bar chart of recidivism rates across programs
+
+#in the block below, change the values to update the plot as needed
+###############################
+ALL.BY  <- F #F overall years; T by year)
+CWC     <- F #T remove 5 programs; F keep 10 programs
+
+#plot colors
+staffc  <- "brown"             #set color for staffing text
+hlinew1 <- "orange"            #set color for weighted line
+hlinew2 <- "darkgrey"          #set color for unweighted line
+date1c  <- "deepskyblue1"      #set color for the earlier data date
+date2c  <- "darkolivegreen3"   #set color for the later data date
+###############################
+
+#filter or don't filter out programs for plotting
+tabout.cwc <- tabout
+{if(CWC) tabout.cwc <- tabout |> filter(! programs_clean %in% rm.pgms)}
+
+dates <- as.numeric(c(date1,date2)) #years of data do you want to plot
+
+#custom title header of plot
+titledates <- ifelse(length(dates)>=2 & date1 != date2, paste0(date1," - ",date2),
+                     ifelse((dates==date1 | dates==date2) & ALL.BY, as.character(dates),
+                            ifelse(!ALL.BY, date1, "")))
+
+#which years/programs are missing data? (footer)
+prg.NA <- tabout.cwc |> 
+  filter(is.na(recid_rate_year)) |>
+  pull(program_official)
+
+##plot it! this will plot recidivism rates with overlaid staffing text
+rr <- ggplot(tabout.cwc |> 
+               filter(if(ALL.BY) year %in% dates else year == date2) |>
+               mutate(recid_rate = case_when(ALL.BY  ~ recid_rate_year,
+                                             !ALL.BY ~ recid_rate_all))
+             ,aes(x=str_wrap(program_official, 32), y=recid_rate, fill=year)) +
+  geom_bar(position = "dodge",stat = "identity") +
+  geom_text(aes(label=ifelse(year==dates[2],paste(num_staff,"staff"),"")), vjust=-0.3, color = staffc) +
+  scale_fill_manual(values=c(date1c,date2c)) +
+  ylim(0,1) +
+  ylab("Recidivism Rate") +
+  xlab("EBBR Programs") +
+  ggtitle(paste0("Recidivism Rates across EBBR programs\n",titledates)) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 30, vjust = 1, hjust=1)) +
+  #remove legend if plotting overall (not by year)
+  {if(!ALL.BY) theme(legend.position="none")}+
+  #only print caption if a program is missing data
+  {if(length(prg.NA)!=0) labs(caption = capture.output(cat("The following programs were missing data in some years:", unique(toupper(prg.NA)), sep=" ")))}+
+  theme(plot.caption=element_text(hjust=0))
+
+#which weights to plot
+w   <- if(ALL.BY) c(w.d1,w.d2) else w.a
+unw <- if(ALL.BY) c(unw.d1,unw.d2) else unw.a
+
+#add recidivism weight averages to plot
+rrfinal <- rr + 
+  {if(!CWC) geom_hline(yintercept=w[1], linetype = "dashed", color = hlinew1, size = 1)} +
+  {if(ALL.BY & !CWC) geom_hline(yintercept=w[2], linetype = "dashed", color = hlinew1, size = 1)}+
+  {if(!CWC)geom_hline(yintercept=unw[1], linetype = "dashed", color = hlinew2, size = 1)} +
+  {if(ALL.BY & !CWC) geom_hline(yintercept=unw[2], linetype = "dotted", color = hlinew2, size = 1)}+
+  {if(!CWC) geom_label_repel(aes(label=lab, y=0.25), fill=hlinew1,
+             data = tabout.cwc |>
+               filter(if(ALL.BY) year %in% dates else year == date2) |>
+               mutate(recid_rate = case_when( ALL.BY  ~ recid_rate_year,
+                                             !ALL.BY ~ recid_rate_all),
+                      lab        = case_when( ALL.BY &  date1 != date2 ~ paste0(date1," Weighted avg: ",w[1],"\n",date2," Weighted avg: ",w[2]),
+                                             !ALL.BY &  date1 != date2 ~ paste0(date1,"-",date2,"\nWeighted avg: ",w[1]),
+                                              ALL.BY &  date1 == date2 ~ paste0(date1,"\nWeighted avg: ",w[1]))) |>
+               filter(programs_clean == last & year == date2),
+             nudge_x = -4,
+             min.segment.length = Inf)} + 
+  {if(!CWC) geom_label_repel(aes(label=lab, y=0.5), fill=hlinew2,
+             data = tabout.cwc |>
+               filter(if(ALL.BY) year %in% dates else year == date2) |>
+               mutate(recid_rate = case_when( ALL.BY  ~ recid_rate_year,
+                                             !ALL.BY ~ recid_rate_all),
+                      lab        = case_when( ALL.BY &  date1 != date2 ~ paste0(date1," Unweighted avg: ",unw[1],"\n",date2," Unweighted avg: ",unw[2]),
+                                             !ALL.BY &  date1 != date2 ~ paste0(date1,"-",date2,"\nUnweighted avg: ",unw[1]),
+                                              ALL.BY &  date1 == date2 ~ paste0(date1,"\nUnweighted avg: ",unw[1]))) |>
+               filter(programs_clean == last & year == date2),
+             nudge_x = -8,
+             min.segment.length = Inf)}
+rrfinal
+```
