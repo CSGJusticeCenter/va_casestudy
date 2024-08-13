@@ -10,7 +10,7 @@ OBJECTIVES:
   - Develop trainings, resources, and communities of practice (CoPs) to implement standards.
 
 ## Staff
-Joshua Mallett - Deputy Division Director, Research [jmallett@csg.org](jmallett@csg.org)
+Joshua Mallett - Deputy Division Director, Research [jmallett@csg.org](jmallett@csg.org)  
 Ruth Coffman - Deputy Program Director, State [rcoffman@csg.org](rcoffman@csg.org)
 
 ### Branches  
