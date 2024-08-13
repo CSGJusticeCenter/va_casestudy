@@ -4,7 +4,7 @@ title: "GDOC Recidivism Analysis"
 
 ## Introduction
 
-Our DOC captures 10 Evidence Based Recidivism Reduction (EBRR) programs in 2017 listed by the Federal Bureau of Prisons and the individuals involved:
+Our DOC captures 10 Evidence Based Recidivism Reduction (EBRR) programs listed by the Federal Bureau of Prisons and the individuals involved:
 
 * Anger Management
 * The Bureau Rehabilitation and Values Enhancement Program
@@ -161,7 +161,7 @@ print(freq(roster.nodup$ret, report.nas = FALSE, cumul = FALSE, display.type = F
 
 Hm - it looks like there are more than 10 programs; `r prgnum` programs to be exact. That doesn't match what you know about your GDOC EBRR programs! Could there be something wrong with the data? It looks like there are also some errors in your data across `programs`, `ret`, and `dt`! 
 
-We'll probably have to make some assumptions on our data. For example, `ret` must be our variable that indicates whether an individual enrolled in an EBRR program returned to prison within 365 days of their release. While the majority of the values are 0s and 1s, a select few are greater than 1 or less than 0. Clean them up and check your work so you can accurately report all EBRR programs and their associated recidivism rates.
+We'll probably have to make some assumptions on our data. For example, `ret` must be our variable that indicates whether an individual enrolled in an EBRR program returned to prison within 365 days of their release date. While the majority of the values are 0s and 1s, a select few are greater than 1 or less than 0. Clean them up and check your work so you can accurately report all EBRR programs and their associated recidivism rates.
 
 ::: {.panel-tabset .nav-pills}
 
@@ -199,7 +199,7 @@ Much better! 10 programs (`programs_clean`) as expected for our DOC, and cleaned
 
 ### Calculating rates
 
-Now that we have a clean dataset, we can finally calculate recidivism rates for all of our programs. Since we have dates spanning two years from the `dt` column, from `r min(roster.clean$dt)` to `r max(roster.clean$dt)`, perhaps we should calculate recidivism rates overall and by year.
+Now that we have a clean dataset, we can finally calculate recidivism rates for all of our programs. Since we appear to have release dates spanning two years from the `dt` column, from `r min(roster.clean$dt)` to `r max(roster.clean$dt)`, perhaps we should calculate recidivism rates overall and by release year.
 
 ::: {.panel-tabset .nav-pills}
 
@@ -422,8 +422,8 @@ rr <- ggplot(tabout |>
   scale_fill_manual(values=c(date1c,date2c)) +
   ylim(0,1) +
   ylab("Recidivism Rate") +
-  xlab("EBBR Programs") +
-  ggtitle(paste0("Recidivism Rates across EBBR programs\n",titledates)) +
+  xlab("EBRR Programs") +
+  ggtitle(paste0("Recidivism Rates across EBRR programs\n",titledates)) +
   theme_classic() +
   #remove legend if plotting overall (not by year)
   {if(!ALL.BY) theme(legend.position="none")}+
@@ -447,8 +447,8 @@ suppressMessages(download_this(rr, button_label = "Download Plot", class = "butt
 
 hc_setup <- highchart() |> 
   hc_tooltip(formatter = JS("function(){return(this.point.tooltip)}")) |>
-  hc_title(text = paste0("Recidivism Rates across EBBR programs\n",titledates)) |>
-  hc_xAxis(title = list(text = "EBBR Programs"), type = "category", labels = list(style = list(width = 200))) |>
+  hc_title(text = paste0("Recidivism Rates across EBRR programs\n",titledates)) |>
+  hc_xAxis(title = list(text = "EBRR Programs"), type = "category", labels = list(style = list(width = 200))) |>
   hc_yAxis(title = list(text = "Recidivism Rate"), max = 1) |>
   hc_legend(enabled = cond.leg) |>
   hc_caption(text = cond.text) |>
@@ -508,7 +508,7 @@ cat(capture.output(cat(paste0(adv_rate,"%"), "average recidivism rate overall fo
 
 ```
 
-This was amazing work; our Director is so happy! But wait! Oh no!! The Center Wing Coalition advocacy group just published [a report](cwc_report.html) that EBBR programs' recidivism rates are at an all time high of `r adv_rate`% with a report that claims to have used **your** DOC's reported data on EBBR program recidivism rates! Find out what's going on, and fast!
+This was amazing work; our Director is so happy! But wait! Oh no!! The Center Wing Coalition advocacy group just published [a report](cwc_report.html) that EBRR programs' recidivism rates are at an all time high of `r adv_rate`% with a report that claims to have used **your** DOC's reported data on EBRR program recidivism rates! Find out what's going on, and fast!
 
 ```{r unweighted}
 #manage the data to produce recidivism rates
@@ -546,7 +546,7 @@ Alright - there's the number the advocacy group reported. But what's missing? Ou
 {{< include cwc_w.R >}}
 
 #print values
-print(paste0(w.a*100,"%", " average recidivism rate (weighted) in overall"))
+print(paste0(w.a*100,"%", " average recidivism rate (weighted) overall"))
 print(capture.output(cat(paste0(w.a5*100,"%"), "average recidivism rate (weighted) overall for the following programs:", unique(tabout[which(!tabout$programs_clean %in% rm.pgms),]$programs_clean), sep=" ")))
 ```
 
@@ -645,7 +645,7 @@ gg_dot <- tabout.dates |>
 
 #add titles/captions
 gg_dot + 
-  {if (ALL.BY) ggtitle("Recidivism Rates across EBBR programs\n") else ggtitle(paste0("Recidivism Rates across EBBR programs\n",titledates))} +
+  {if (ALL.BY) ggtitle("Recidivism Rates across EBRR programs\n") else ggtitle(paste0("Recidivism Rates across EBRR programs\n",titledates))} +
   #only print caption if a program is missing data
   labs(caption = cond.text) +
   theme(plot.caption=element_text(hjust=0))
@@ -675,14 +675,14 @@ ggplot(tabout, aes(x=programs_clean, y=recid_rate_all)) +
   geom_point( color=staffc, size=4, alpha=0.6) +
   theme_light() +
   coord_flip() +
-  xlab("EBBR Programs") +
+  xlab("EBRR Programs") +
   ylab("Recidivism Rate") +
   theme(
     panel.grid.major.y = element_blank(),
     panel.border = element_blank(),
     axis.ticks.y = element_blank()
   ) + 
-  ggtitle(paste0("Recidivism Rates across EBBR programs\n",titledates)) +
+  ggtitle(paste0("Recidivism Rates across EBRR programs\n",titledates)) +
   theme(plot.caption=element_text(hjust=0)) +
   #only print caption if a program is missing data
   labs(caption = cond.text)
@@ -701,14 +701,14 @@ ggplot(tabout, aes(x=programs_clean, y=recid_rate_all)) +
                filter(programs_clean == last & year == date2)) +
   theme_light() +
   coord_flip() +
-  xlab("EBBR Programs") +
+  xlab("EBRR Programs") +
   ylab("Recidivism Rate") +
   theme(
     panel.grid.major.y = element_blank(),
     panel.border = element_blank(),
     axis.ticks.y = element_blank()
   ) + 
-  ggtitle(paste0("Recidivism Rates across EBBR programs\n",titledates)) +
+  ggtitle(paste0("Recidivism Rates across EBRR programs\n",titledates)) +
   #only print caption if a program is missing data
   labs(caption = cond.text) +
   theme(plot.caption=element_text(hjust=0))
@@ -720,7 +720,7 @@ ggplot(tabout, aes(x=programs_clean, y=recid_rate_all)) +
 
 ### Plotting by Year
 
-What about displaying these rates by year?
+What about displaying these rates by release year?
 
 ::: {.panel-tabset .nav-pills}
 
@@ -812,7 +812,7 @@ gg_line <- tabout.dates |>
              col = "grey60") 
   
 gg_line +
-  ggtitle("Recidivism Rates across EBBR programs\n") +
+  ggtitle("Recidivism Rates across EBRR programs\n") +
   #only print caption if a program is missing data
   labs(caption = cond.text) +
   theme(plot.caption=element_text(hjust=0))
@@ -839,7 +839,7 @@ highchart() |>
             }"
            )), title = list(text = "Recidivism Rate"), min = -1, max = 1) |>
   hc_tooltip(formatter = JS("function(){return(this.point.tooltip)}")) |>
-  hc_xAxis(title = list(text = "EBBR Programs"), type = "category", labels = list(style = list(width = 200))) |>
+  hc_xAxis(title = list(text = "EBRR Programs"), type = "category", labels = list(style = list(width = 200))) |>
   hc_caption(text = cond.text) |>
   hc_title(   text = date1, align = "center", x = 0, y = 20, margin = 0,
               style = list(fontSize = "12px", color = "lightblue")) |>

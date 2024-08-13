@@ -33,8 +33,8 @@ Ruth Coffman - Deputy Program Director, State [rcoffman@csg.org](rcoffman@csg.or
   |-- cwc_report.qmd           # case study fake report
   |-- libraries.R              # libraries for running va_cs.qmd
   |-- data_setup.R             # create simulated data
-  |-- re_report.R              # function for toggling report output with different data and formatting
-  |-- execute.R                # function from re_report.R to toggle final HTML with parameters
+  |-- re_report.R              # function to toggle report output w/different data and format
+  |-- execute.R                # function from re_report.R to toggle final HTML w/parameters
   |-- toggle.R                 # toggle logic
   |-- rm_pgms.R                # list of programs removed by CWC in case study
   |-- dedup.R                  # deduplication logic for roster data
@@ -50,7 +50,6 @@ Ruth Coffman - Deputy Program Director, State [rcoffman@csg.org](rcoffman@csg.or
   |-- styles.css               # css for buttons and code font
   |-- README.md
   |-- va_casestudy.Rproj
-  |-- roster_summer_final.xlsx # excel format case study solutions
   
 ```  
 

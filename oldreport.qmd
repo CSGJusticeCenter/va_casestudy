@@ -19,9 +19,9 @@ data.frame(pgm   = c("Anger Management",
                      "Steps Toward Awareness, Growth, and Emotional Strength Program"),
             recid = c(0.90, 0.38, 0.41, 0.59, 0.36, 0.57, 0.05, 0.44, 0.08, 0.92),
             stf   = c(2, 9, 4, 8, 5, 16, 11, 4, 7, 17)
-) |> rename("Program (Graduated 2015)" = pgm,
-            "Recidivism Rate (2016)" = recid,
-            "Staffing" = stf) |>
+) |> rename("Program (Graduated 2016)" = pgm,
+            "Recidivism Rate (2017)"   = recid,
+            "Staffing"                 = stf) |>
   kbl()
 ```
 
