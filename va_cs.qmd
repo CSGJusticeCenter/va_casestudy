@@ -793,6 +793,10 @@ print(sample.doc, target = "finaltable.docx")                                   
 
 ![](finaltable.pdf){width=100% height=1100}
 
+```{r tablefinaldoc, echo=FALSE}
+suppressMessages(download_file("finaltable.docx", button_label = "Download Word DOCX", class = "button_large", output_name = "finaltable"))
+```
+
 ## R Session
 
 ```{r, collapse=TRUE}

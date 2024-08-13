@@ -2,4 +2,4 @@
 #staffdata - set the staff data to run (staff.csv or staffupdate.csv)
 #byyear - set to T or F (T is run analysis by year, F is run analysis overall years), default is F
 
-casestudydata("rosterupdate.csv", "staffupdate.csv", T)
+casestudydata("roster.csv", "staff.csv", F)
