@@ -389,6 +389,10 @@ ggplot(tabout,aes(x=programs_clean, y=recid_rate_year,fill=year)) +
 
 Oh I think we could do better than that!
 
+::: {.panel-tabset .nav-pills}
+
+## Plot
+
 ```{r dataviz1, warning=FALSE}
 #build bar chart of recidivism rates across programs
 #information to plot, pick dates
@@ -403,6 +407,9 @@ titledates <- ifelse(length(dates)>=2 & date1 != date2, paste0(date1," - ",date2
 prg.NA <- tabout |> 
   filter(is.na(recid_rate_year)) |>
   pull(programs_clean)
+
+#caption text about missing program data
+{if(length(prg.NA)!=0) cond.text <- capture.output(cat("The following programs were missing data in some years:", unique(toupper(prg.NA)), sep=" ")) else cond.text <- ""}
 
 #plot it! this will plot recidivism rates with overlaid staffing text
 rr <- ggplot(tabout |> 
@@ -421,7 +428,7 @@ rr <- ggplot(tabout |>
   #remove legend if plotting overall (not by year)
   {if(!ALL.BY) theme(legend.position="none")}+
   #only print caption if a program is missing data
-  {if(length(prg.NA)!=0) labs(caption = capture.output(cat("The following programs were missing data in some years:", unique(toupper(prg.NA)), sep=" ")))}+
+  labs(caption = cond.text) +
   theme(plot.caption=element_text(hjust=0))
 
 #display
@@ -431,6 +438,56 @@ rr
 ```{r dataviz1print, echo=FALSE}
 suppressMessages(download_this(rr, button_label = "Download Plot", class = "button_large", output_name = paste0("recidivism_rate_",date1,"_to_",date2)))
 ```
+
+## Interactive Plot
+
+```{r, warning=FALSE}
+#keep or hide legend depending on overall or by years
+{if (ALL.BY) cond.leg <- T else cond.leg <- F}
+
+hc_setup <- highchart() |> 
+  hc_tooltip(formatter = JS("function(){return(this.point.tooltip)}")) |>
+  hc_title(text = paste0("Recidivism Rates across EBBR programs\n",titledates)) |>
+  hc_xAxis(title = list(text = "EBBR Programs"), type = "category", labels = list(style = list(width = 200))) |>
+  hc_yAxis(title = list(text = "Recidivism Rate"), max = 1) |>
+  hc_legend(enabled = cond.leg) |>
+  hc_caption(text = cond.text) |>
+  hc_add_dependency(name = "modules/exporting.js") |>
+  hc_exporting(enabled = TRUE,
+               chartOptions  = list(
+                 chart = list(
+                   backgroundColor = 'white')),
+               buttons       = list(
+                 contextButton = list(
+                   menuItems = list("downloadPNG", "downloadSVG"))))
+#overall
+{if (!ALL.BY)
+hc_setup |>
+  hc_add_series(data = tabout |> 
+                  filter(year == date2) |>
+                  mutate(tooltip = paste0("<b>", program_official, "</b><br>",
+                                   "Recidivism Rate: ",recid_rate_all, "<br>",
+                                   "Staffing: ", num_staff)), 
+                hcaes(x=program_official, y=recid_rate_all), 
+                color = "lightblue", 
+                type  = "bar")
+}
+
+#by year
+{if (ALL.BY)
+hc_setup |> 
+  hc_add_series(data = tabout |> 
+                  filter(year %in% dates) |>
+                  mutate(tooltip = paste0("<b>", program_official, "</b><br>",
+                                   "Recidivism Rate: ",recid_rate_year, "<br>",
+                                   "Staffing: ", num_staff)), 
+                hcaes(x=program_official, y=recid_rate_year, group=year), 
+                color = c("lightblue","darkgreen"), 
+                type  = "bar")
+}
+```
+
+:::
 
 ::: {.callout-important}
 ## Important
@@ -509,7 +566,7 @@ Change the highlighted code below (`ALL.BY`, `CWC`, and plot colors) to update y
 A `Download Image` button will appear when you hover over the plot.
 :::
 
-## More Cool Data Viz!
+## More Data Viz!
 
 Let's prepare our data to do some really fun data viz! What are some other engaging ways we could plot recidivism rates for leadership and our stakeholders pooled overall for these programs?
 
@@ -590,7 +647,7 @@ gg_dot <- tabout.dates |>
 gg_dot + 
   {if (ALL.BY) ggtitle("Recidivism Rates across EBBR programs\n") else ggtitle(paste0("Recidivism Rates across EBBR programs\n",titledates))} +
   #only print caption if a program is missing data
-  {if(length(prg.NA)!=0) labs(caption = capture.output(cat("The following programs were missing data in some years:", unique(toupper(prg.NA)), sep=" ")))}+
+  labs(caption = cond.text) +
   theme(plot.caption=element_text(hjust=0))
 
 ```
@@ -628,7 +685,7 @@ ggplot(tabout, aes(x=programs_clean, y=recid_rate_all)) +
   ggtitle(paste0("Recidivism Rates across EBBR programs\n",titledates)) +
   theme(plot.caption=element_text(hjust=0)) +
   #only print caption if a program is missing data
-  {if(length(prg.NA)!=0) labs(caption = capture.output(cat("The following programs were missing data in some years:", unique(toupper(prg.NA)), sep=" ")))}
+  labs(caption = cond.text)
 ```
 
 ## More Lollipops!
@@ -653,7 +710,7 @@ ggplot(tabout, aes(x=programs_clean, y=recid_rate_all)) +
   ) + 
   ggtitle(paste0("Recidivism Rates across EBBR programs\n",titledates)) +
   #only print caption if a program is missing data
-  {if(length(prg.NA)!=0) labs(caption = capture.output(cat("The following programs were missing data in some years:", unique(toupper(prg.NA)), sep=" ")))}+
+  labs(caption = cond.text) +
   theme(plot.caption=element_text(hjust=0))
 
 
@@ -757,8 +814,37 @@ gg_line <- tabout.dates |>
 gg_line +
   ggtitle("Recidivism Rates across EBBR programs\n") +
   #only print caption if a program is missing data
-  {if(length(prg.NA)!=0) labs(caption = capture.output(cat("The following programs were missing data in some years:", unique(toupper(prg.NA)), sep=" ")))}+
+  labs(caption = cond.text) +
   theme(plot.caption=element_text(hjust=0))
+```
+
+## Interactive Bars
+
+```{r, warning=FALSE, message=FALSE}
+highchart() |>
+  hc_add_series(data = tabout |> 
+                  filter(year %in% dates) |>
+                  mutate(recid_rate = ifelse(year == date1, -1*recid_rate_year, recid_rate_year),
+                         tooltip    = paste0("<b>", program_official, "</b><br>",
+                                             "Recidivism Rate: ", abs(recid_rate), "<br>",
+                                             "Staffing: ", num_staff)), 
+                hcaes(x=program_official, y=recid_rate, group=year), 
+                color = c("lightblue","darkgreen"), 
+                type  = "bar", 
+                showInLegend = F) |> 
+  hc_plotOptions(bar = list(stacking = "normal")) |>
+  # format the labels on the x-axis (y-axis per HC)
+  hc_yAxis(labels = list(formatter = htmlwidgets::JS( 
+           "function() {return Math.abs(this.value); /* all labels to absolute values */
+            }"
+           )), title = list(text = "Recidivism Rate"), min = -1, max = 1) |>
+  hc_tooltip(formatter = JS("function(){return(this.point.tooltip)}")) |>
+  hc_xAxis(title = list(text = "EBBR Programs"), type = "category", labels = list(style = list(width = 200))) |>
+  hc_caption(text = cond.text) |>
+  hc_title(   text = date1, align = "center", x = 0, y = 20, margin = 0,
+              style = list(fontSize = "12px", color = "lightblue")) |>
+  hc_subtitle(text = date2, align = "center", x = 250, y = 20, margin = 0, 
+              style = list(fontSize = "12px", color = "darkgreen"))
 ```
 
 :::

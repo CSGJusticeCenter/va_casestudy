@@ -188,7 +188,7 @@ casestudydata &lt;- function(csdata = "roster.csv", staffdata = "staff.csv", byy
 #staffdata - set the staff data to run (staff.csv or staffupdate.csv)
 #byyear - set to T or F (T is run analysis by year, F is run analysis overall years), default is F
 
-casestudydata("roster.csv", "staff.csv", F)
+casestudydata("rosterupdate.csv", "staffupdate.csv", F)
 
 #ANALYSIS TOGGLE
 ######################################
@@ -394,13 +394,13 @@ CWC     &lt;- F #T remove 5 programs; F keep 10 programs
 staffc  &lt;- "brown"             #set color for staffing text
 hlinew1 &lt;- "orange"            #set color for weighted line
 hlinew2 &lt;- "darkgrey"          #set color for unweighted line
-date1c  &lt;- "deepskyblue1"      #set color for the earlier data date
-date2c  &lt;- "darkolivegreen3"   #set color for the later data date
+date1c  &lt;- "deepskyblue1"      #set color for earlier data date/overall
+date2c  &lt;- "darkolivegreen3"   #set color for later data date
 ###############################
 
 #filter or don't filter out programs for plotting
 tabout.cwc &lt;- tabout
-{if(CWC) tabout.cwc &lt;- tabout |&gt; filter(! programs_clean %in% rm.pgms)}
+invisible({if(CWC) tabout.cwc &lt;- tabout |&gt; filter(! programs_clean %in% rm.pgms)})
 
 #years of data do you want to plot
 dates &lt;- as.numeric(c(date1,date2))
@@ -443,14 +443,14 @@ unw &lt;- if(ALL.BY &amp; !CWC) c(unw.d1,unw.d2) else if(ALL.BY &amp; CWC) {c(un
 #nudging labels based on number of programs in plot
 nudge.w   &lt;- 0
 nudge.unw &lt;- 0
-{if(!CWC) (nudgew &lt;- -4) &amp; (nudgeunw &lt;- -8)}
+invisible({if(!CWC) (nudge.w &lt;- -4) &amp; (nudge.unw &lt;- -8)})
 
 #add recidivism weight averages to plot
 rrfinal &lt;- rr + 
   geom_hline(yintercept=w[1], linetype = "dashed", color = hlinew1, size = 1) +
   {if(ALL.BY) geom_hline(yintercept=w[2], linetype = "dashed", color = hlinew1, size = 1)}+
   geom_hline(yintercept=unw[1], linetype = "dashed", color = hlinew2, size = 1) +
-  {if(ALL.BY) geom_hline(yintercept=unw[2], linetype = "dotted", color = hlinew2, size = 1)}+
+  {if(ALL.BY) geom_hline(yintercept=unw[2], linetype = "dashed", color = hlinew2, size = 1)}+
   geom_label_repel(aes(label=lab, y=0.25), fill=hlinew1,
              data = tabout.cwc |&gt;
                filter(if(ALL.BY) year %in% dates else year == date2) |&gt;
