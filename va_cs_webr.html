@@ -46,7 +46,11 @@ ul.task-list li input[type="checkbox"] {
 
 
 
-<pre class="{webr-r}"><code>#programs
+<pre class="{webr-r}"><code>#data setup
+#programs
+#https://www.bop.gov/inmates/fsa/docs/fsa_program_guide_2107.pdf
+#https://www.bop.gov/inmates/fsa/docs/evidence_based_recidivism_reduction_programs.pdf
+
 #for participants
 prgnm = c("am,0",        "am,0",        "am,0",        "am,0",        "am,0",                      "am,1",        "am,1",        "am,1",        #CWC
           
@@ -56,9 +60,9 @@ prgnm = c("am,0",        "am,0",        "am,0",        "am,0",        "am,0",   
           
           "resolve,0",   "resolve,0",                                                              "resolve,1",   "resolve,1",
           
-                                                                                                   "rdap,1",      "rdap,1",      "rdap,1",      #CWC #spelling error below 
+          "rdap,1",      "rdap,1",      "rdap,1",      #CWC #spelling error below 
           
-                                                                                                   "dbt,1",       "dbt,1",                      #CWC #spelling error below
+          "dbt,1",       "dbt,1",                      #CWC #spelling error below
           
           "sotrt,0",                                                                               "sotrt,1",     "sotrt,1",
           
@@ -76,19 +80,19 @@ prgnm = c("am,0",        "am,0",        "am,0",        "am,0",        "am,0",   
 
 #for staff
 prgnm2 = c("am",
-          "brave",
-          "bcs",
-          "resolve",
-          "rdap",
-          "dbt",
-          "sotrt",
-          "challenge",
-          "mhsd",
-          "stages",
-          #spelling errors
-          "brv",
-          "stg",
-          "resol")
+           "brave",
+           "bcs",
+           "resolve",
+           "rdap",
+           "dbt",
+           "sotrt",
+           "challenge",
+           "mhsd",
+           "stages",
+           #spelling errors
+           "brv",
+           "stg",
+           "resol")
 
 #dataframe sizes: sizen - roster, sizen2 - program staff, sizen3 - 2nd roster
 sizen  = 50 #DO NOT CHANGE - THIS IS SIZE OF DATA BEING SAMPLED ABOVE
@@ -114,20 +118,20 @@ roster.prep &lt;- data.frame(
   programs.temp = sample(prgnm, size=50, replace = FALSE),
   #create dates in programs
   dt            = as.Date("2018-01-01") + round(rnorm(sizen, mean = 0, sd = 120))
-  ) |&gt;
+) |&gt;
   #split programs/returns
   mutate(programs  = substr(programs.temp,1,nchar(programs.temp)-2),
          ret       = as.numeric(substr(programs.temp,nchar(programs.temp),nchar(programs.temp))),
          #put in a random date to throw things off
          dt        = case_when(row_number() == sizen-3  ~ as.Date(paste0('2007/06/05')), 
                                row_number() == sizen-20 ~ as.Date(paste0('1997/08/22')),
-                            TRUE ~ dt),
+                               TRUE ~ dt),
          #put in a random return values
          ret       = case_when(row_number() == sizen-10  ~ -1, 
                                row_number() == sizen-30  ~ 11,
                                row_number() == sizen-17  ~ 2,
-                            TRUE ~ ret)
-         ) |&gt;
+                               TRUE ~ ret)
+  ) |&gt;
   select(-c(programs.temp)) 
 
 #create duplicates
@@ -149,10 +153,10 @@ roster.update &lt;- data.frame(
   age             = round(rnorm(sizen3,29,5)),
   programs.temp   = sample(prgnm, size=sizen3, replace = TRUE),
   dt       = as.Date("2022-01-01") + round(rnorm(sizen, mean = 0, sd = 120))
-  ) |&gt;
+) |&gt;
   mutate(programs = substr(programs.temp,1,nchar(programs.temp)-2),
          ret  = as.numeric(substr(programs.temp,nchar(programs.temp),nchar(programs.temp)))
-         ) |&gt;
+  ) |&gt;
   select(-c(programs.temp))
 
 ########################################
@@ -163,17 +167,30 @@ set.seed(160)
 staff &lt;- data.frame(
   staff = ch_name(sizen2,messy=TRUE),
   prg   = sample(prgnm2, size=sizen2, replace = TRUE)
-  )
+)
 set.seed(160)
 staff.update &lt;- data.frame(
   staff = ch_name(sizen4,messy=TRUE),
   prg   = sample(prgnm2, size=sizen4, replace = TRUE)
-  )
+)
+
 
 #ANALYSIS TOGGLE
 ######################################
-valset  &lt;- 0 #set valset to 0 for first iteration; 1 for updated data iteration
+casestudydata &lt;- function(csdata = "roster.csv", staffdata = "staff.csv", byyear = F) {
+  if (csdata == "roster.csv" &amp; staffdata == "staff.csv") {valset &lt;&lt;- 0} else if (csdata == "rosterupdate.csv" &amp; staffdata == "staffupdate.csv") {valset &lt;&lt;- 1}
+  ALL.BY    &lt;&lt;- byyear
+  dataname1 &lt;&lt;- noquote(substr(csdata,1,nchar(csdata)-4))
+  dataname2 &lt;&lt;- noquote(substr(staffdata,1,nchar(staffdata)-4))
+}
 
+#csdata - set the roster program data to run (roster.csv or rosterupdate.csv)
+#staffdata - set the staff data to run (staff.csv or staffupdate.csv)
+#byyear - set to T or F (T is run analysis by year, F is run analysis overall years), default is F
+
+casestudydata("roster.csv", "staff.csv", F)
+
+#ANALYSIS TOGGLE
 ######################################
 roster  &lt;- if(valset==0) {roster} else {roster.update} #options: roster; roster.update
 date1   &lt;- if(valset==0) {date1}  else {date3}         #options: date1 (within roster); date3 (within roster.update)
@@ -181,11 +198,14 @@ date2   &lt;- if(valset==0) {date2}  else {date4}         #options: date2 (withi
 staff   &lt;- if(valset==0) {staff}  else {staff.update}  #options: staff; staff.update
 ######################################
 
+
 #programs to remove per the CWC report
 rm.pgms &lt;- c("bcs", "brave", "sotrt", "mhsd", "resolve")
 
+
 #deduplicate across all columns
 roster.nodup &lt;- roster[!duplicated(roster), ]
+
 
 #clean program names
 roster.clean &lt;- roster.nodup |&gt;
@@ -198,14 +218,15 @@ roster.clean &lt;- roster.nodup |&gt;
          
          #dates - assume that wrong dates occurred in 2017
          dt      = case_when(year(dt) &lt; 2017 ~ `year&lt;-`(dt, 2017),
-                                    TRUE ~ dt),
+                             TRUE ~ dt),
          
          #returns - assume that wrong returns should all be =1
          ret            = case_when(ret == -1 ~ 1,
                                     ret == 2  ~ 1,
                                     ret == 11 ~ 1,
                                     TRUE ~ ret)
-         )
+  )
+
 
 ##create dataset of numerators and denominators
 #recidivism rates overall
@@ -216,8 +237,8 @@ roster2.1 &lt;- roster.clean |&gt;
   count(ret) |&gt;
   mutate(clients_served = sum(n),
          recid_rate_all = case_when(ret == 1 ~ round(n/clients_served,2),
-                                ret == 0 ~ 0)
-         ) |&gt;
+                                    ret == 0 ~ 0)
+  ) |&gt;
   group_by(programs_clean) |&gt;
   slice(n()) |&gt;
   select(-c(ret, n)) |&gt;
@@ -231,8 +252,8 @@ roster2.2 &lt;- roster.clean |&gt;
   count(ret,year) |&gt;
   mutate(clients_served = sum(n),
          recid_rate_year= case_when(ret == 1 ~ round(n/clients_served,2),
-                                ret == 0 ~ 0)
-         ) |&gt;
+                                    ret == 0 ~ 0)
+  ) |&gt;
   group_by(programs_clean,year) |&gt;
   slice(n()) |&gt;
   select(-c(ret, n)) |&gt;
@@ -240,6 +261,7 @@ roster2.2 &lt;- roster.clean |&gt;
 
 #combine data by programs to capture recidivism rates overall and by year
 roster2 &lt;- inner_join(roster2.1, roster2.2, by = "programs_clean")
+
 
 #clean program names
 staff.clean &lt;- staff |&gt;
@@ -254,6 +276,8 @@ staff2 &lt;- staff.clean |&gt;
   count(programs_clean) |&gt;
   rename(num_staff = n)
 
+
+#create table dataset
 tabout &lt;- inner_join(roster2, staff2, by = ("programs_clean")) |&gt;
   select(-c(clients_served_all, clients_served_year)) |&gt;
   ungroup() |&gt;
@@ -281,6 +305,7 @@ tabout &lt;- inner_join(roster2, staff2, by = ("programs_clean")) |&gt;
 #for positioning in plotting
 last &lt;- tail(tabout$programs_clean,n=1)
 
+
 #manage the data to produce recidivism rates
 tabout2 &lt;- inner_join(roster2, staff2, by = ("programs_clean")) |&gt;
   ungroup() |&gt;
@@ -301,20 +326,24 @@ unw.d1 &lt;- round(mean(tabout2[which(tabout2$year==date1),]$recid_rate_year,na.
 #calculate average recidivism rate across programs from year 2
 unw.d2 &lt;- round(mean(tabout2[which(tabout2$year==date2),]$recid_rate_year,na.rm=TRUE),2)
 
+#JUST 5 PROGRAMS!
+#calculate average recidivism rate across programs from all years
+unw.a5 &lt;- round(mean(tabout2[which(!tabout2$programs_clean %in% rm.pgms),]$recid_rate_all,na.rm=TRUE),2)
+
+#calculate average recidivism rate across programs from year 1
+unw.d15 &lt;- round(mean(tabout2[which(tabout2$year==date1 &amp; !tabout2$programs_clean %in% rm.pgms),]$recid_rate_year,na.rm=TRUE),2)
+
+#calculate average recidivism rate across programs from year 2
+unw.d25 &lt;- round(mean(tabout2[which(tabout2$year==date2 &amp; !tabout2$programs_clean %in% rm.pgms),]$recid_rate_year,na.rm=TRUE),2)
+
+
 #manage the data to produce recidivism rates
-#total clients served (all years)
+#total clients served (all years, year1, year2)
 total.a &lt;- sum(tabout2[which(tabout2$year==date1),]$clients_served_all, na.rm=TRUE)
 tabout2.wgt &lt;- tabout2 |&gt;
   filter(year==date1) |&gt;
   mutate(recid_rate_all_w = clients_served_all*recid_rate_all)
 w.a &lt;- round(sum(tabout2.wgt$recid_rate_all_w)/total.a,2)
-
-#total clients served (all years), JUST 5 PROGRAMS!!!
-total.a5 &lt;- sum(tabout2[which(tabout2$year==date1 &amp; !tabout2$programs_clean %in% rm.pgms),]$clients_served_all, na.rm=TRUE)
-tabout2.wgt5 &lt;- tabout2 |&gt;
-  filter(!(programs_clean %in% rm.pgms) &amp; year==date1) |&gt;
-  mutate(recid_rate_all_w = clients_served_all*recid_rate_all)
-w.a5 &lt;- round(sum(tabout2.wgt5$recid_rate_all_w)/total.a5,2)
 
 #total clients served (year 1)
 total.d1 &lt;- sum(tabout2[which(tabout2$year==date1),]$clients_served_year,na.rm=TRUE)
@@ -328,12 +357,34 @@ total.d2 &lt;- sum(tabout2[which(tabout2$year==date2),]$clients_served_year,na.r
 tabout2.wgt &lt;- tabout2 |&gt;
   filter(year==date2) |&gt;
   mutate(recid_rate_year_w = clients_served_year*recid_rate_year)
-w.d2 &lt;- round(sum(tabout2.wgt$recid_rate_year_w,na.rm=TRUE)/total.d2,2)</code></pre>
+w.d2 &lt;- round(sum(tabout2.wgt$recid_rate_year_w,na.rm=TRUE)/total.d2,2)
+
+#JUST 5 PROGRAMS!!!
+#total clients served (all years)
+total.a5 &lt;- sum(tabout2[which(tabout2$year==date1 &amp; !tabout2$programs_clean %in% rm.pgms),]$clients_served_all, na.rm=TRUE)
+tabout2.wgt5 &lt;- tabout2 |&gt;
+  filter(!(programs_clean %in% rm.pgms) &amp; year==date1) |&gt;
+  mutate(recid_rate_all_w = clients_served_all*recid_rate_all)
+w.a5 &lt;- round(sum(tabout2.wgt5$recid_rate_all_w)/total.a5,2)
+
+#total clients served (year 1)
+total.d15 &lt;- sum(tabout2[which(tabout2$year==date1 &amp; !tabout2$programs_clean %in% rm.pgms),]$clients_served_year,na.rm=TRUE)
+tabout2.wgt5 &lt;- tabout2 |&gt;
+  filter(!(programs_clean %in% rm.pgms) &amp; year==date1) |&gt;
+  mutate(recid_rate_year_w = clients_served_year*recid_rate_year)
+w.d15 &lt;- round(sum(tabout2.wgt5$recid_rate_year_w,na.rm=TRUE)/total.d15,2)
+
+#total clients served (year2)
+total.d25 &lt;- sum(tabout2[which(tabout2$year==date2 &amp; !tabout2$programs_clean %in% rm.pgms),]$clients_served_year,na.rm=TRUE)
+tabout2.wgt5 &lt;- tabout2 |&gt;
+  filter(!(programs_clean %in% rm.pgms) &amp; year==date2) |&gt;
+  mutate(recid_rate_year_w = clients_served_year*recid_rate_year)
+w.d25 &lt;- round(sum(tabout2.wgt5$recid_rate_year_w,na.rm=TRUE)/total.d25,2)
+</code></pre>
 <pre class="{webr-r}"><code>#| context: interactive
 #| editor-max-height: 500
-#| editor-code-line-numbers: 5-6, 9-13
+#| editor-code-line-numbers: 4-5, 8-12
 #build bar chart of recidivism rates across programs
-
 #in the block below, change the values to update the plot as needed
 ###############################
 ALL.BY  &lt;- F #F overall years; T by year)
@@ -351,7 +402,8 @@ date2c  &lt;- "darkolivegreen3"   #set color for the later data date
 tabout.cwc &lt;- tabout
 {if(CWC) tabout.cwc &lt;- tabout |&gt; filter(! programs_clean %in% rm.pgms)}
 
-dates &lt;- as.numeric(c(date1,date2)) #years of data do you want to plot
+#years of data do you want to plot
+dates &lt;- as.numeric(c(date1,date2))
 
 #custom title header of plot
 titledates &lt;- ifelse(length(dates)&gt;=2 &amp; date1 != date2, paste0(date1," - ",date2),
@@ -368,7 +420,7 @@ rr &lt;- ggplot(tabout.cwc |&gt;
                filter(if(ALL.BY) year %in% dates else year == date2) |&gt;
                mutate(recid_rate = case_when(ALL.BY  ~ recid_rate_year,
                                              !ALL.BY ~ recid_rate_all))
-             ,aes(x=str_wrap(program_official, 30), y=recid_rate, fill=year)) +
+             ,aes(x=str_wrap(program_official, 32), y=recid_rate, fill=year)) +
   geom_bar(position = "dodge",stat = "identity") +
   geom_text(aes(label=ifelse(year==dates[2],paste(num_staff,"staff"),"")), vjust=-0.3, color = staffc) +
   scale_fill_manual(values=c(date1c,date2c)) +
@@ -377,7 +429,7 @@ rr &lt;- ggplot(tabout.cwc |&gt;
   xlab("EBBR Programs") +
   ggtitle(paste0("Recidivism Rates across EBBR programs\n",titledates)) +
   theme_classic() +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
+  theme(axis.text.x = element_text(angle = 30, vjust = 1, hjust=1)) +
   #remove legend if plotting overall (not by year)
   {if(!ALL.BY) theme(legend.position="none")}+
   #only print caption if a program is missing data
@@ -385,16 +437,21 @@ rr &lt;- ggplot(tabout.cwc |&gt;
   theme(plot.caption=element_text(hjust=0))
 
 #which weights to plot
-w   &lt;- if(ALL.BY) c(w.d1,w.d2) else w.a
-unw &lt;- if(ALL.BY) c(unw.d1,unw.d2) else unw.a
+w   &lt;- if(ALL.BY &amp; !CWC) c(w.d1,w.d2) else if(ALL.BY &amp; CWC) {c(w.d15,w.d25)} else if(!ALL.BY &amp; !CWC) {w.a} else {w.a5}
+unw &lt;- if(ALL.BY &amp; !CWC) c(unw.d1,unw.d2) else if(ALL.BY &amp; CWC) {c(unw.d15,unw.d25)} else if(!ALL.BY &amp; !CWC) {unw.a} else {unw.a5}
+
+#nudging labels based on number of programs in plot
+nudge.w   &lt;- 0
+nudge.unw &lt;- 0
+{if(!CWC) (nudgew &lt;- -4) &amp; (nudgeunw &lt;- -8)}
 
 #add recidivism weight averages to plot
-rr + 
-  {if(!CWC) geom_hline(yintercept=w[1], linetype = "dashed", color = hlinew1, size = 1)} +
-  {if(ALL.BY &amp; !CWC) geom_hline(yintercept=w[2], linetype = "dashed", color = hlinew1, size = 1)}+
-  {if(!CWC)geom_hline(yintercept=unw[1], linetype = "dashed", color = hlinew2, size = 1)} +
-  {if(ALL.BY &amp; !CWC) geom_hline(yintercept=unw[2], linetype = "dotted", color = hlinew2, size = 1)}+
-  {if(!CWC) geom_label_repel(aes(label=lab, y=0.25), fill=hlinew1,
+rrfinal &lt;- rr + 
+  geom_hline(yintercept=w[1], linetype = "dashed", color = hlinew1, size = 1) +
+  {if(ALL.BY) geom_hline(yintercept=w[2], linetype = "dashed", color = hlinew1, size = 1)}+
+  geom_hline(yintercept=unw[1], linetype = "dashed", color = hlinew2, size = 1) +
+  {if(ALL.BY) geom_hline(yintercept=unw[2], linetype = "dotted", color = hlinew2, size = 1)}+
+  geom_label_repel(aes(label=lab, y=0.25), fill=hlinew1,
              data = tabout.cwc |&gt;
                filter(if(ALL.BY) year %in% dates else year == date2) |&gt;
                mutate(recid_rate = case_when( ALL.BY  ~ recid_rate_year,
@@ -403,9 +460,10 @@ rr +
                                              !ALL.BY &amp;  date1 != date2 ~ paste0(date1,"-",date2,"\nWeighted avg: ",w[1]),
                                               ALL.BY &amp;  date1 == date2 ~ paste0(date1,"\nWeighted avg: ",w[1]))) |&gt;
                filter(programs_clean == last &amp; year == date2),
-             nudge_x = -4,
-             min.segment.length = Inf)} + 
-  {if(!CWC) geom_label_repel(aes(label=lab, y=0.5), fill=hlinew2,
+             #move unweighted label left or right on x axis
+             nudge_x = nudge.w,
+             min.segment.length = Inf) + 
+  geom_label_repel(aes(label=lab, y=0.5), fill=hlinew2,
              data = tabout.cwc |&gt;
                filter(if(ALL.BY) year %in% dates else year == date2) |&gt;
                mutate(recid_rate = case_when( ALL.BY  ~ recid_rate_year,
@@ -414,8 +472,10 @@ rr +
                                              !ALL.BY &amp;  date1 != date2 ~ paste0(date1,"-",date2,"\nUnweighted avg: ",unw[1]),
                                               ALL.BY &amp;  date1 == date2 ~ paste0(date1,"\nUnweighted avg: ",unw[1]))) |&gt;
                filter(programs_clean == last &amp; year == date2),
-             nudge_x = -8,
-             min.segment.length = Inf)} </code></pre>
+             #move unweighted label left or right on x axis
+             nudge_x = nudge.unw,
+             min.segment.length = Inf)
+rrfinal</code></pre>
 
 </main>
 <!-- /main column -->

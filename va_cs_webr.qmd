@@ -38,9 +38,8 @@
 ```{webr-r}
 #| context: interactive
 #| editor-max-height: 500
-#| editor-code-line-numbers: 5-6, 9-13
+#| editor-code-line-numbers: 4-5, 8-12
 #build bar chart of recidivism rates across programs
-
 #in the block below, change the values to update the plot as needed
 ###############################
 ALL.BY  <- F #F overall years; T by year)
@@ -50,15 +49,16 @@ CWC     <- F #T remove 5 programs; F keep 10 programs
 staffc  <- "brown"             #set color for staffing text
 hlinew1 <- "orange"            #set color for weighted line
 hlinew2 <- "darkgrey"          #set color for unweighted line
-date1c  <- "deepskyblue1"      #set color for the earlier data date
-date2c  <- "darkolivegreen3"   #set color for the later data date
+date1c  <- "deepskyblue1"      #set color for earlier data date/overall
+date2c  <- "darkolivegreen3"   #set color for later data date
 ###############################
 
 #filter or don't filter out programs for plotting
 tabout.cwc <- tabout
 {if(CWC) tabout.cwc <- tabout |> filter(! programs_clean %in% rm.pgms)}
 
-dates <- as.numeric(c(date1,date2)) #years of data do you want to plot
+#years of data do you want to plot
+dates <- as.numeric(c(date1,date2))
 
 #custom title header of plot
 titledates <- ifelse(length(dates)>=2 & date1 != date2, paste0(date1," - ",date2),
@@ -92,16 +92,21 @@ rr <- ggplot(tabout.cwc |>
   theme(plot.caption=element_text(hjust=0))
 
 #which weights to plot
-w   <- if(ALL.BY) c(w.d1,w.d2) else w.a
-unw <- if(ALL.BY) c(unw.d1,unw.d2) else unw.a
+w   <- if(ALL.BY & !CWC) c(w.d1,w.d2) else if(ALL.BY & CWC) {c(w.d15,w.d25)} else if(!ALL.BY & !CWC) {w.a} else {w.a5}
+unw <- if(ALL.BY & !CWC) c(unw.d1,unw.d2) else if(ALL.BY & CWC) {c(unw.d15,unw.d25)} else if(!ALL.BY & !CWC) {unw.a} else {unw.a5}
+
+#nudging labels based on number of programs in plot
+nudge.w   <- 0
+nudge.unw <- 0
+{if(!CWC) (nudge.w <- -4) & (nudge.unw <- -8)}
 
 #add recidivism weight averages to plot
 rrfinal <- rr + 
-  {if(!CWC) geom_hline(yintercept=w[1], linetype = "dashed", color = hlinew1, size = 1)} +
-  {if(ALL.BY & !CWC) geom_hline(yintercept=w[2], linetype = "dashed", color = hlinew1, size = 1)}+
-  {if(!CWC)geom_hline(yintercept=unw[1], linetype = "dashed", color = hlinew2, size = 1)} +
-  {if(ALL.BY & !CWC) geom_hline(yintercept=unw[2], linetype = "dotted", color = hlinew2, size = 1)}+
-  {if(!CWC) geom_label_repel(aes(label=lab, y=0.25), fill=hlinew1,
+  geom_hline(yintercept=w[1], linetype = "dashed", color = hlinew1, size = 1) +
+  {if(ALL.BY) geom_hline(yintercept=w[2], linetype = "dashed", color = hlinew1, size = 1)}+
+  geom_hline(yintercept=unw[1], linetype = "dashed", color = hlinew2, size = 1) +
+  {if(ALL.BY) geom_hline(yintercept=unw[2], linetype = "dotted", color = hlinew2, size = 1)}+
+  geom_label_repel(aes(label=lab, y=0.25), fill=hlinew1,
              data = tabout.cwc |>
                filter(if(ALL.BY) year %in% dates else year == date2) |>
                mutate(recid_rate = case_when( ALL.BY  ~ recid_rate_year,
@@ -110,9 +115,10 @@ rrfinal <- rr +
                                              !ALL.BY &  date1 != date2 ~ paste0(date1,"-",date2,"\nWeighted avg: ",w[1]),
                                               ALL.BY &  date1 == date2 ~ paste0(date1,"\nWeighted avg: ",w[1]))) |>
                filter(programs_clean == last & year == date2),
-             nudge_x = -4,
-             min.segment.length = Inf)} + 
-  {if(!CWC) geom_label_repel(aes(label=lab, y=0.5), fill=hlinew2,
+             #move unweighted label left or right on x axis
+             nudge_x = nudge.w,
+             min.segment.length = Inf) + 
+  geom_label_repel(aes(label=lab, y=0.5), fill=hlinew2,
              data = tabout.cwc |>
                filter(if(ALL.BY) year %in% dates else year == date2) |>
                mutate(recid_rate = case_when( ALL.BY  ~ recid_rate_year,
@@ -121,7 +127,8 @@ rrfinal <- rr +
                                              !ALL.BY &  date1 != date2 ~ paste0(date1,"-",date2,"\nUnweighted avg: ",unw[1]),
                                               ALL.BY &  date1 == date2 ~ paste0(date1,"\nUnweighted avg: ",unw[1]))) |>
                filter(programs_clean == last & year == date2),
-             nudge_x = -8,
-             min.segment.length = Inf)}
+             #move unweighted label left or right on x axis
+             nudge_x = nudge.unw,
+             min.segment.length = Inf)
 rrfinal
 ```

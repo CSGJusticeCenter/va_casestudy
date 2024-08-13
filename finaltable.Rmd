@@ -69,7 +69,7 @@ source("cwc_unw.R")
 source("cwc_w.R")
 
 #build bar chart of recidivism rates across programs
-source2("va_cs_webr.qmd",42,126)
+source2("va_cs_webr.qmd",42,133)
 
 #plot print
 pdf(width=6.5,height=5,pointsize=15,file="rrfinal.pdf")

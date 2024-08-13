@@ -16,3 +16,13 @@ unw.d1 <- round(mean(tabout2[which(tabout2$year==date1),]$recid_rate_year,na.rm=
 
 #calculate average recidivism rate across programs from year 2
 unw.d2 <- round(mean(tabout2[which(tabout2$year==date2),]$recid_rate_year,na.rm=TRUE),2)
+
+#JUST 5 PROGRAMS!
+#calculate average recidivism rate across programs from all years
+unw.a5 <- round(mean(tabout2[which(!tabout2$programs_clean %in% rm.pgms),]$recid_rate_all,na.rm=TRUE),2)
+
+#calculate average recidivism rate across programs from year 1
+unw.d15 <- round(mean(tabout2[which(tabout2$year==date1 & !tabout2$programs_clean %in% rm.pgms),]$recid_rate_year,na.rm=TRUE),2)
+
+#calculate average recidivism rate across programs from year 2
+unw.d25 <- round(mean(tabout2[which(tabout2$year==date2 & !tabout2$programs_clean %in% rm.pgms),]$recid_rate_year,na.rm=TRUE),2)
