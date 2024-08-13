@@ -55,7 +55,7 @@ date2c  <- "darkolivegreen3"   #set color for later data date
 
 #filter or don't filter out programs for plotting
 tabout.cwc <- tabout
-{if(CWC) tabout.cwc <- tabout |> filter(! programs_clean %in% rm.pgms)}
+invisible({if(CWC) tabout.cwc <- tabout |> filter(! programs_clean %in% rm.pgms)})
 
 #years of data do you want to plot
 dates <- as.numeric(c(date1,date2))
@@ -98,14 +98,14 @@ unw <- if(ALL.BY & !CWC) c(unw.d1,unw.d2) else if(ALL.BY & CWC) {c(unw.d15,unw.d
 #nudging labels based on number of programs in plot
 nudge.w   <- 0
 nudge.unw <- 0
-{if(!CWC) (nudge.w <- -4) & (nudge.unw <- -8)}
+invisible({if(!CWC) (nudge.w <- -4) & (nudge.unw <- -8)})
 
 #add recidivism weight averages to plot
 rrfinal <- rr + 
   geom_hline(yintercept=w[1], linetype = "dashed", color = hlinew1, size = 1) +
   {if(ALL.BY) geom_hline(yintercept=w[2], linetype = "dashed", color = hlinew1, size = 1)}+
   geom_hline(yintercept=unw[1], linetype = "dashed", color = hlinew2, size = 1) +
-  {if(ALL.BY) geom_hline(yintercept=unw[2], linetype = "dotted", color = hlinew2, size = 1)}+
+  {if(ALL.BY) geom_hline(yintercept=unw[2], linetype = "dashed", color = hlinew2, size = 1)}+
   geom_label_repel(aes(label=lab, y=0.25), fill=hlinew1,
              data = tabout.cwc |>
                filter(if(ALL.BY) year %in% dates else year == date2) |>

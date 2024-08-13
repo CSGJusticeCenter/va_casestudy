@@ -20,7 +20,11 @@ You ask your analysts to try to produce another report with updated data, yet th
 
 Meanwhile, the ever-persistent Center Wing Coalition (CWC) is crafting a bill to counteract all the progress your agency has been making in your recidivism-reduction efforts. The CWC argues that if your agency has survived for the past two years with current staffing levels, you must be doing okay and are advocating to cut your overall allocated FTE. Meanwhile, your own staff is working overtime through lunch, and you are certain you saw at least two team members browsing on Indeed last week. 
 
-You're in a bind, and time is ticking. Not to mention, your best friend has planned a getaway next month in Las Vegas. You paid for this trip over six months ago and you have no intention of missing it. However, you have no desire to be sitting in the Blue Man Group show thinking about this data… 
+You're in a bind, and time is ticking. Not to mention, your best friend has planned a getaway next month in Las Vegas. You paid for this trip over six months ago and you have no intention of missing it. However, you have no desire to be sitting in the Blue Man Group show thinking about this data...
+
+## Source Code
+
+This Quarto file and analysis can be fully reproduced using the source code found at the CSG Justice Center [VA Case Study GitHub Repository](https://github.com/CSGJusticeCenter/va_casestudy). Additionally, CSV data files can be downloaded here: [VA Case Study Data](https://github.com/CSGJusticeCenter/va_data/tree/main/case_study). 
 
 ## About Virtual Academy
 
