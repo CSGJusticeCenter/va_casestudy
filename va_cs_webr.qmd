@@ -81,8 +81,8 @@ rr <- ggplot(tabout.cwc |>
   scale_fill_manual(values=c(date1c,date2c)) +
   ylim(0,1) +
   ylab("Recidivism Rate") +
-  xlab("EBBR Programs") +
-  ggtitle(paste0("Recidivism Rates across EBBR programs\n",titledates)) +
+  xlab("EBRR Programs") +
+  ggtitle(paste0("Recidivism Rates across EBRR programs\n",titledates)) +
   theme_classic() +
   theme(axis.text.x = element_text(angle = 30, vjust = 1, hjust=1)) +
   #remove legend if plotting overall (not by year)
