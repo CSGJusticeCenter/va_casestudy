@@ -68,6 +68,10 @@ The following are important to note:
 2. All included .R, .Rmd, and .qmd scripts in this top-level repo are necessary to successfully render output. This is due to various .R programs that are included across .qmd and .Rmd programs developed for quality assurance and efficiency purposes.
 3. Rendering `va_cs.qmd` will also create a PDF and DOCX documents called `finaltable.pdf` and `finaltable.docx` respectively containing output for the case study.
 
+## Reproducible Environment
+
+This entire case study Quarto HTML can be reproduced locally by utilizing the `renv` package developed by Posit, and the included `renv.lock` file in this GitHub repository. Follow the guidance on Posit's site [here](https://rstudio.github.io/renv/articles/renv.html#getting-started).
+
 ## Netlify site
 Visit the [Virtual Academy - Case Study Netlify Site](https://csg-va-casestudy.netlify.app/) to follow along with the case study, engage with the results, and utilize code for your own future analyses.
 
