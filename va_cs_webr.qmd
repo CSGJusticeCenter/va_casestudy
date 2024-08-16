@@ -42,7 +42,7 @@
 #build bar chart of recidivism rates across programs
 #in the block below, change the values to update the plot as needed
 ###############################
-ALL.BY  <- F #F overall years; T by year)
+ALL.BY  <- F #F overall years; T by year
 CWC     <- F #T remove 5 programs; F keep 10 programs
 
 #plot colors
