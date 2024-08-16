@@ -12,15 +12,19 @@ As part of an ongoing staffing crisis, you have been asked by your director to r
 
 ### [GDOC Recidivism Analysis](va_cs.html)
 
-Amidst a swirling staffing crisis at the Gotham Department of Corrections (GDOC), you find yourself in a peculiar predicament. Your director, the fearsome Evelyn "Firebrand" Summers, has thrust upon you the Herculean task of resurrecting a report forged under the previous Research Director Miranda "Mermaid" Shelsky. Dr. Shelsky, now retired and sipping mojitos on a secluded beach in Fiji, left behind a report detailing recidivism rates and the indispensable staffing needs for DOC's prized programs. 
+Amid a staffing crisis at the Gotham Department of Corrections (GDOC), you find yourself in a peculiar predicament. Your director, the fearsome Evelyn "Firebrand" Summers, has thrust upon you the Herculean task of resurrecting a report forged under the previous research director, Miranda "Mermaid" Shelsky. Dr. Shelsky, now retired and sipping mojitos on a secluded beach in Fiji, left behind a report detailing recidivism rates and the indispensable staffing needs for GDOC's prized programs. 
 
-The report establishes recidivism rates for several key supervision/reentry programs for high risk people and provides staffing levels for these programs. Director Summers is depending on you to build a case to keep the necessary staff to implement these programs successfully.  
+The report establishes recidivism rates for several key supervision/reentry programs for high-risk people and provides staffing levels for these programs. Director Summers is depending on you to build a case to keep the necessary staff to implement these programs successfully.  
 
-You ask your only analyst to try to reproduce the report, yet there mysteriously doesn’t seem to be any record of how the original report’s numbers were produced. Your analyst has spent 3 days and cannot seem to figure out the formula. The analyst is also now 3 days behind on other tasks that have been assigned and it is time to move on.  
+You ask your analysts to try to produce another report with updated data, yet there mysteriously doesn't seem to be any record of how the original report's numbers were produced. Your best analyst has spent three days trying figure out the formula to no avail. The analyst is also now three days behind on other tasks that have been assigned and it is time to move on.  
 
-Meanwhile, the ever-persistent Center Wing Coalition (CWC) are crafting a bill to counteract all of the progress your agency has been making in your recidivism-reduction efforts. The CWC argue that, if your agency has survived for the past two years with current staffing levels, you must be doing okay and are advocating to cut your overall allocated FTE. Meanwhile, your staff is working overtime through lunch, and you are certain you saw at least two team members browsing on Indeed last week. 
+Meanwhile, the ever-persistent Center Wing Coalition (CWC) is crafting a bill to counteract all the progress your agency has been making in your recidivism-reduction efforts. The CWC argues that if your agency has survived for the past two years with current staffing levels, you must be doing okay and are advocating to cut your overall allocated FTE. Meanwhile, your own staff is working overtime through lunch, and you are certain you saw at least two team members browsing on Indeed last week. 
 
-You’re in a tight bind, and time is ticking. Not to mention, your best friend has planned a getaway next month in Las Vegas. You paid for this trip over six months ago and you have no intention of missing it. However, you have no desire to be sitting in the Blue Man Group show thinking about this data…  
+You're in a bind, and time is ticking. Not to mention, your best friend has planned a getaway next month in Las Vegas. You paid for this trip over six months ago and you have no intention of missing it. However, you have no desire to be sitting in the Blue Man Group show thinking about this data...
+
+## Source Code
+
+This Quarto file and analysis can be fully reproduced using the source code found at the CSG Justice Center [VA Case Study GitHub Repository](https://github.com/CSGJusticeCenter/va_casestudy). Additionally, CSV data files can be downloaded here: [VA Case Study Data](https://github.com/CSGJusticeCenter/va_data/tree/main/case_study). 
 
 ## About Virtual Academy
 

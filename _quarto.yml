@@ -5,8 +5,10 @@ book:
   title: "Summer Conference Case Study"
   chapters:
     - index.qmd
+    - oldreport.qmd
     - va_cs.qmd
     - cwc_report.qmd
+    - email.qmd
   sidebar: 
     logo: img/Virtual Academy_RGB.png
   site-url: https://csg-va-casestudy.netlify.app/
@@ -17,13 +19,27 @@ book:
       ![](img/Virtual Academy_White.svg){fig-alt='Virtual Academy' width=354px}<br><br>
       This project was supported by Grant No. 15PBJA-22-GK-01570-JRIX awarded by the Bureau of Justice Assistance. The Bureau of Justice Assistance is a component of the Department of Justice’s Office of Justice Programs, which also includes the Bureau of Justice Statistics, the National Institute of Justice, the Office of Juvenile Justice and Delinquency Prevention, the Office for Victims of Crime, and the SMART Office. Points of view or opinions in this document are those of the author and do not necessarily represent the official position or policies of the U.S. Department of Justice.
 
+engine: knitr
+webr:
+  show-startup-message: false    # Disable displaying status of webR initialization
+  cell-options:
+    autorun: true                # automatically run webr chunks before user interacts with them
+    context: setup
+    warning: false
+    editor-font-scale: 0.75
+  packages: ['charlatan', 'lubridate', 'tidyverse', 'knitr', 'ggrepel','stringr']
+
+filters:
+  - webr
+
 knitr:
   opts_chunk: 
-    collapse: true
-    comment: "#>"
+    results: "hold"
+
 
 format:
   html:
+    css: styles.css
     df-print: paged
     theme:
       - zephyr
@@ -41,6 +57,9 @@ format:
     toc-title: "On this page"
     link-external-icon: true
     link-external-newwindow: true
-    code-fold: show
     code-overflow: wrap
     title-prefix: "ADC Virtual Academy"
+    include-in-header: 
+      - file: google-font.html
+    code-fold: true
+    code-summary: "Reveal R code"

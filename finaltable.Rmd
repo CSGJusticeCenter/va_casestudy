@@ -1,0 +1,98 @@
+---
+title: "GDOC Program Recidivism/Staffing Requirements"
+subtitle: "`r format(Sys.Date(), '%B %Y')`"
+geometry: "left=1.5cm,right=1.5cm,top=0cm,bottom=1cm"
+---
+\setlength{\headsep}{-0.25cm}
+\pagenumbering{gobble}
+\vspace{-2.6truecm}
+
+```{r pretable, echo=FALSE, message=FALSE, warning=FALSE}
+library(charlatan)
+library(lubridate)
+library(tidyverse)
+library(knitr)
+library(ggrepel)
+
+#data setup
+source("data_setup.R")
+source("re_report.R")
+source("execute.R")
+source("toggle.R")
+```
+
+This report includes the overall recidivism rates (release years `r date1`-`r date2`) for evidence-based programming provided in the Gotham Department of Corrections facilities for high-risk people. Staffing numbers describe how many full-time employees are needed over the course of a year to keep each program running. Each program facilitator completes extensive training and must complete eight hours of continuing education each year. 
+
+\small
+
+```{r table, echo=FALSE, message=FALSE, warning=FALSE}
+#programs to remove per the CWC report
+source("rm_pgms.R")
+
+#deduplicate across all columns
+source("dedup.R")
+
+#clean program names
+source("roster_clean.R")
+
+##create dataset of numerators and denominators
+#recidivism rates overall
+source("rates.R")
+
+#clean program names
+source("staff_clean.R")
+
+#create table dataset
+source("tabledata.R")
+
+source("finaltable_report.R")
+reportit |> rename(`Program (Graduated 2017-2018)`          = "program_official",
+                   `Recidivism Rate (2018-2019)` = "recid_rate_all",
+                   Staffing          = "num_staff") |> 
+  kable()
+```
+
+\vspace{-0.5truecm}
+
+```{r graphic, include=FALSE}
+source2 <- function(file, start, end, ...) {
+    file.lines <- scan(file, what=character(), skip=start-1, nlines=end-start+1, sep='\n')
+    file.lines.collapsed <- paste(file.lines, collapse='\n')
+    source(textConnection(file.lines.collapsed), ...)
+}
+
+#manage the data to produce recidivism rates
+source("cwc_unw.R")
+
+#manage the data to produce recidivism rates
+#total clients served (all years, year1, year2)
+source("cwc_w.R")
+
+#build bar chart of recidivism rates across programs
+source2("va_cs_webr.qmd",42,133)
+
+#plot print
+pdf(width=6.5,height=5,pointsize=15,file="rrfinal.pdf")
+print(rrfinal)
+dev.off()  
+
+ggsave("rrfinal.png", width = 8, height = 6, units = "in")
+```
+
+\begin{figure}
+\includegraphics{rrfinal.pdf}
+\end{figure}
+
+\normalsize
+
+\vspace{-1truecm}
+
+## Findings
+\vspace{-0.4cm}
+Overall, the program with the lowest recidivism rates is: `r reportit[which(reportit$recid_rate_all == min(reportit$recid_rate_all)),]$program_official`. The program with the highest recidivism rates is: `r reportit[which(reportit$recid_rate_all == max(reportit$recid_rate_all)),]$program_official`. The average weighted recidivism rate is `r w.a`.
+
+\vspace{-0.3cm}
+
+## Methodology
+\vspace{-0.4cm}
+All participants have taken one of these programs right before release. The cohort analyzed were released from prison in `r date1` and `r date2`. Overall recidivism rates are computed. 
